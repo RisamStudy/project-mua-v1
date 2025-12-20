@@ -19,6 +19,9 @@
 
 # production
 /build
+/next-build
+
+/my-app.zip
 
 # misc
 .DS_Store
