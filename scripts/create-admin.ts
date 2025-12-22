@@ -8,9 +8,9 @@ async function main() {
   try {
     // Data admin
     const adminData = {
-      username: 'admin',
-      email: 'admin@roromua.com',
-      password: 'admin123', // Ganti dengan password yang aman
+      username: 'admin2',
+      email: 'admin2@roromua.com',
+      password: 'admin23', // Ganti dengan password yang aman
       name: 'Administrator',
       role: 'admin',
     };
@@ -23,9 +23,9 @@ async function main() {
       where: {
         OR: [
           { username: adminData.username },
-          { email: adminData.email }
-        ]
-      }
+          { email: adminData.email },
+        ],
+      },
     });
 
     if (existingUser) {

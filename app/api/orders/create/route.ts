@@ -75,23 +75,23 @@ export async function POST(request: Request) {
 
       // Create order
       const order = await tx.order.create({
-        data: {
-          orderNumber,
-          clientId: validClientId,
-          eventLocation: sanitizedEventLocation,
-          items: validItems,
-          stageModelPhoto: stageModelPhoto || null,
-          chairModel: chairModel ? sanitizeString(chairModel, 255) : null,
-          tentColorPhoto: tentColorPhoto || null,
-          softlensColor: softlensColor ? sanitizeString(softlensColor, 100) : null,
-          dressPhotos: dressPhotos && dressPhotos.length > 0 ? dressPhotos : null,
-          specialRequest: specialRequest ? sanitizeString(specialRequest, 1000) : null,
-          totalAmount: validTotalAmount,
-          paidAmount: validPaidAmount,
-          remainingAmount,
-          paymentStatus: paymentStatus || 'Belum Lunas',
-        },
-      });
+          data: {
+            orderNumber,
+            clientId: validClientId,
+            eventLocation: sanitizedEventLocation,
+            items: JSON.stringify(validItems), // Convert array ke string
+            stageModelPhoto: stageModelPhoto || null,
+            chairModel: chairModel ? sanitizeString(chairModel, 255) : null,
+            tentColorPhoto: tentColorPhoto || null,
+            softlensColor: softlensColor ? sanitizeString(softlensColor, 100) : null,
+            dressPhotos: dressPhotos?.length ? dressPhotos : null,
+            specialRequest: specialRequest ? sanitizeString(specialRequest, 1000) : null,
+            totalAmount: validTotalAmount,
+            paidAmount: validPaidAmount,
+            remainingAmount,
+            paymentStatus: paymentStatus || 'Belum Lunas',
+          },
+        });
 
       
 

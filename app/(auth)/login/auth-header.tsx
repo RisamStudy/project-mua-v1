@@ -5,7 +5,7 @@ export default function AuthHeader() {
         brush
       </span>
       <span className="text-xl font-bold tracking-wider text-white">
-        RORO MUA
+        RORO MUAss
       </span>
     </div>
   );
