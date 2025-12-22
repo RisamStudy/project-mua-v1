@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import DeleteModal from '@/components/ui/delete-modal';
-import Toast from '@/components/ui/toast';
+import { useState } from "react";
+import Link from "next/link";
+import DeleteModal from "@/components/ui/delete-modal";
+import Toast from "@/components/ui/toast";
 
 interface Client {
   id: string;
@@ -16,7 +16,7 @@ interface Client {
 }
 
 export default function ClientsTable({ clients }: { clients: Client[] }) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -28,18 +28,18 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
     clientName: null,
   });
   const [deleting, setDeleting] = useState(false);
-  
+
   // ✅ TOAST STATE - LETAKKAN DI SINI (setelah state lainnya)
   const [toast, setToast] = useState<{
     isOpen: boolean;
     message: string;
-    type: 'success' | 'error';
+    type: "success" | "error";
   }>({
     isOpen: false,
-    message: '',
-    type: 'success',
+    message: "",
+    type: "success",
   });
-  
+
   const itemsPerPage = 7;
 
   // Filter clients based on search
@@ -78,18 +78,21 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
 
     setDeleting(true);
     try {
-      const response = await fetch(`/api/clients/${deleteModal.clientId}/delete`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/clients/${deleteModal.clientId}/delete`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         closeDeleteModal();
         setToast({
           isOpen: true,
-          message: 'Client deleted successfully',
-          type: 'success',
+          message: "Client deleted successfully",
+          type: "success",
         });
-        
+
         // Reload after showing toast
         setTimeout(() => {
           window.location.reload();
@@ -98,15 +101,15 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
         const data = await response.json();
         setToast({
           isOpen: true,
-          message: data.message || 'Failed to delete client',
-          type: 'error',
+          message: data.message || "Failed to delete client",
+          type: "error",
         });
       }
-    } catch (error) {
+    } catch {
       setToast({
         isOpen: true,
-        message: 'Failed to delete client',
-        type: 'error',
+        message: "Failed to delete client",
+        type: "error",
       });
     } finally {
       setDeleting(false);
@@ -175,19 +178,37 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
             <tbody className="divide-y divide-[#2a2a2a]">
               {currentClients.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                    {searchQuery ? 'No clients found matching your search.' : 'No clients yet. Add your first client!'}
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-400"
+                  >
+                    {searchQuery
+                      ? "No clients found matching your search."
+                      : "No clients yet. Add your first client!"}
                   </td>
                 </tr>
               ) : (
                 currentClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-[#1a1a1a] transition-colors">
+                  <tr
+                    key={client.id}
+                    className="hover:bg-[#1a1a1a] transition-colors"
+                  >
                     <td className="px-6 py-4 text-white">{client.brideName}</td>
-                    <td className="px-6 py-4 text-gray-300">{client.groomName}</td>
-                    <td className="px-6 py-4 text-gray-300">{client.primaryPhone}</td>
-                    <td className="px-6 py-4 text-gray-300">{client.secondaryPhone}</td>
-                    <td className="px-6 py-4 text-gray-300">{client.ceremonyDate}</td>
-                    <td className="px-6 py-4 text-gray-300">{client.receptionDate}</td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {client.groomName}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {client.primaryPhone}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {client.secondaryPhone}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {client.ceremonyDate}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {client.receptionDate}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Link
@@ -195,14 +216,20 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
                           className="p-2 text-gray-400 hover:text-[#d4b896] transition-colors"
                           title="Edit client"
                         >
-                          <span className="material-symbols-outlined text-xl">edit</span>
+                          <span className="material-symbols-outlined text-xl">
+                            edit
+                          </span>
                         </Link>
                         <button
-                          onClick={() => openDeleteModal(client.id, client.brideName)}
+                          onClick={() =>
+                            openDeleteModal(client.id, client.brideName)
+                          }
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete client"
                         >
-                          <span className="material-symbols-outlined text-xl">delete</span>
+                          <span className="material-symbols-outlined text-xl">
+                            delete
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -217,7 +244,8 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
         {filteredClients.length > 0 && (
           <div className="px-6 py-4 border-t border-[#2a2a2a] flex items-center justify-between">
             <div className="text-sm text-gray-400">
-              Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredClients.length)} of{' '}
+              Menampilkan {startIndex + 1}-
+              {Math.min(endIndex, filteredClients.length)} of{" "}
               {filteredClients.length} Klien
             </div>
             <div className="flex items-center gap-2">
@@ -230,7 +258,9 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
                 Sebelumnya
               </button>
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="flex items-center gap-1 px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -252,7 +282,6 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
         loading={deleting}
       />
 
-      
       <Toast
         isOpen={toast.isOpen}
         message={toast.message}

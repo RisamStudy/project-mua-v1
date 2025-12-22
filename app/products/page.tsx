@@ -1,16 +1,19 @@
-import { prisma } from '@/lib/prisma';
-import ProductsGrid from './products-grid';
-import ProductsHeader from './products-header';
+import { prisma } from "@/lib/prisma";
+import ProductsGrid from "./products-grid";
+import ProductsHeader from "./products-header";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 async function getProducts() {
   try {
     const products = await prisma.product.findMany({
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    return products.map(product => ({
+    return products.map((product) => ({
       id: product.id,
       name: product.name,
       category: product.category,
@@ -20,7 +23,7 @@ async function getProducts() {
       isActive: product.isActive,
     }));
   } catch (error) {
-    console.error('Failed to fetch products:', error);
+    console.error("Failed to fetch products:", error);
     return [];
   }
 }

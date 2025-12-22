@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
 
     // Get order with latest payment
@@ -13,24 +17,21 @@ export async function POST(
       where: { id },
       include: {
         payments: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 1,
         },
       },
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
     // Check if there's a payment to generate invoice for
     const latestPayment = order.payments[0];
     if (!latestPayment) {
       return NextResponse.json(
-        { message: 'No payment found for this order' },
+        { message: "No payment found for this order" },
         { status: 400 }
       );
     }
@@ -43,7 +44,7 @@ export async function POST(
     if (existingInvoice) {
       return NextResponse.json({
         success: true,
-        message: 'Invoice already exists',
+        message: "Invoice already exists",
         invoiceId: existingInvoice.id,
         data: existingInvoice,
       });
@@ -51,7 +52,9 @@ export async function POST(
 
     // Generate invoice number
     const count = await prisma.invoice.count();
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`;
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(
+      count + 1
+    ).padStart(3, "0")}`;
 
     // Calculate due date (7 days from now)
     const dueDate = new Date();
@@ -65,7 +68,7 @@ export async function POST(
         paymentId: latestPayment.id,
         amount: latestPayment.amount,
         paidAmount: latestPayment.amount,
-        status: 'Paid',
+        status: "Paid",
         dueDate,
         notes: `Invoice untuk pembayaran DP${latestPayment.paymentNumber} - ${order.orderNumber}`,
       },
@@ -73,14 +76,17 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Invoice generated successfully',
+      message: "Invoice generated successfully",
       invoiceId: invoice.id,
       data: invoice,
     });
-  } catch (error: any) {
-    console.error('Generate invoice error:', error);
+  } catch (error: unknown) {
+    console.error("Generate invoice error:", error);
     return NextResponse.json(
-      { message: error.message || 'Failed to generate invoice' },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to generate invoice",
+      },
       { status: 500 }
     );
   }

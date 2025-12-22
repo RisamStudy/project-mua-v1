@@ -7,7 +7,9 @@ interface LoginFormProps {
   redirectTo?: string;
 }
 
-export default function LoginForm({ redirectTo }: LoginFormProps) {
+export default function LoginForm({
+  redirectTo: _redirectTo = "/dashboard",
+}: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -39,8 +41,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       const from = searchParams.get("from") || "/dashboard";
       router.push(from);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -52,7 +54,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
       <h1 className="text-white text-[32px] font-bold leading-tight text-left pb-2">
         Welcome Back
       </h1>
-      
+
       <p className="text-gray-600 text-base font-normal leading-normal pb-8">
         Please enter your details to sign in.
       </p>
@@ -66,10 +68,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
 
       {/* Login Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
-        
         {/* Form Fields Container */}
         <div className="flex flex-col gap-4">
-          
           {/* Username Field */}
           <label className="flex flex-col flex-1">
             <p className="text-white text-base font-medium leading-normal pb-2">
@@ -100,7 +100,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
                 Forgot password?
               </a>
             </div>
-            
+
             {/* Password Input with Toggle Button */}
             <div className="flex w-full flex-1 items-stretch">
               <input
@@ -113,7 +113,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
                 }
                 required
               />
-              
+
               {/* Show/Hide Password Button */}
               <button
                 className="text-gray-500 flex border border-[#e0d5c7] bg-[#f8f6f3] items-center justify-center px-4 rounded-r-lg border-l-0 hover:bg-[#f0ebe5] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#d4b896]/50 transition-colors"
@@ -126,7 +126,6 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
               </button>
             </div>
           </label>
-
         </div>
 
         {/* Submit Button */}
@@ -138,8 +137,20 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
           {loading ? (
             <span className="flex items-center gap-2">
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               Logging in...
             </span>

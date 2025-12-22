@@ -1,15 +1,19 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const body = await request.json();
     const { title, description, startTime, endTime, clientId, color } = body;
 
     // Validasi input
     if (!title || !startTime || !endTime) {
       return NextResponse.json(
-        { message: 'Title, start time, and end time are required' },
+        { message: "Title, start time, and end time are required" },
         { status: 400 }
       );
     }
@@ -22,7 +26,7 @@ export async function POST(request: Request) {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         clientId: clientId || null,
-        color: color || '#d4b896',
+        color: color || "#d4b896",
       },
       include: {
         client: true,
@@ -31,13 +35,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Appointment created successfully',
+      message: "Appointment created successfully",
       data: appointment,
     });
-  } catch (error: any) {
-    console.error('Create appointment error:', error);
+  } catch (error: unknown) {
+    console.error("Create appointment error:", error);
     return NextResponse.json(
-      { message: error.message || 'Failed to create appointment' },
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to create appointment",
+      },
       { status: 500 }
     );
   }

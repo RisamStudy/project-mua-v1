@@ -1,37 +1,40 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import Toast from '@/components/ui/toast';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import Toast from "@/components/ui/toast";
 
 export default function AddProductForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [toast, setToast] = useState<{
     isOpen: boolean;
     message: string;
-    type: 'success' | 'error';
+    type: "success" | "error";
   }>({
     isOpen: false,
-    message: '',
-    type: 'success',
+    message: "",
+    type: "success",
   });
-  
+
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    description: '',
-    price: '',
+    name: "",
+    category: "",
+    description: "",
+    price: "",
   });
 
   // Fungsi untuk compress image
-  const compressImage = (file: File, maxWidth: number = 800): Promise<string> => {
+  const compressImage = (
+    file: File,
+    maxWidth: number = 800
+  ): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -39,7 +42,7 @@ export default function AddProductForm() {
         const img = new Image();
         img.src = event.target?.result as string;
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
 
@@ -50,10 +53,10 @@ export default function AddProductForm() {
 
           canvas.width = width;
           canvas.height = height;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
 
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
           resolve(compressedBase64);
         };
         img.onerror = reject;
@@ -66,11 +69,11 @@ export default function AddProductForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       setToast({
         isOpen: true,
-        message: 'Please upload an image file',
-        type: 'error',
+        message: "Please upload an image file",
+        type: "error",
       });
       return;
     }
@@ -78,8 +81,8 @@ export default function AddProductForm() {
     if (file.size > 10 * 1024 * 1024) {
       setToast({
         isOpen: true,
-        message: 'Image size must be less than 10MB',
-        type: 'error',
+        message: "Image size must be less than 10MB",
+        type: "error",
       });
       return;
     }
@@ -88,28 +91,28 @@ export default function AddProductForm() {
       const compressedBase64 = await compressImage(file, 800);
       setImagePreview(compressedBase64);
 
-      console.log('Image compressed:', {
-        originalSize: (file.size / 1024).toFixed(2) + 'KB',
-        compressedSize: (compressedBase64.length / 1024).toFixed(2) + 'KB'
+      console.log("Image compressed:", {
+        originalSize: (file.size / 1024).toFixed(2) + "KB",
+        compressedSize: (compressedBase64.length / 1024).toFixed(2) + "KB",
       });
-    } catch (error) {
+    } catch {
       setToast({
         isOpen: true,
-        message: 'Failed to process image',
-        type: 'error',
+        message: "Failed to process image",
+        type: "error",
       });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validasi form
     if (!formData.name.trim()) {
       setToast({
         isOpen: true,
-        message: 'Product name is required',
-        type: 'error',
+        message: "Product name is required",
+        type: "error",
       });
       return;
     }
@@ -117,8 +120,8 @@ export default function AddProductForm() {
     if (!formData.category.trim()) {
       setToast({
         isOpen: true,
-        message: 'Category is required',
-        type: 'error',
+        message: "Category is required",
+        type: "error",
       });
       return;
     }
@@ -126,8 +129,8 @@ export default function AddProductForm() {
     if (!formData.price || parseFloat(formData.price) <= 0) {
       setToast({
         isOpen: true,
-        message: 'Please enter a valid price',
-        type: 'error',
+        message: "Please enter a valid price",
+        type: "error",
       });
       return;
     }
@@ -143,34 +146,34 @@ export default function AddProductForm() {
         imageUrl: imagePreview,
       };
 
-      const response = await fetch('/api/products/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/products/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submitData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create product');
+        throw new Error(data.message || "Failed to create product");
       }
 
       setToast({
         isOpen: true,
-        message: 'Product created successfully!',
-        type: 'success',
+        message: "Product created successfully!",
+        type: "success",
       });
 
       setTimeout(() => {
-        router.push('/products');
+        router.push("/products");
         router.refresh();
       }, 1500);
-    } catch (err: any) {
-      console.error('Submit error:', err);
+    } catch (err: unknown) {
+      console.error("Submit error:", err);
       setToast({
         isOpen: true,
-        message: err.message || 'Something went wrong',
-        type: 'error',
+        message: err instanceof Error ? err.message : "Something went wrong",
+        type: "error",
       });
     } finally {
       setLoading(false);
@@ -200,8 +203,11 @@ export default function AddProductForm() {
         {/* Product Photo */}
         <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-2">Product Photo</h2>
-          <p className="text-sm text-gray-400 mb-6">Upload a product photo (automatically compressed for optimal storage).</p>
-          
+          <p className="text-sm text-gray-400 mb-6">
+            Upload a product photo (automatically compressed for optimal
+            storage).
+          </p>
+
           <div className="border-2 border-dashed border-[#2a2a2a] rounded-xl p-8 text-center hover:border-[#d4b896] transition-colors cursor-pointer">
             <input
               type="file"
@@ -213,17 +219,27 @@ export default function AddProductForm() {
             <label htmlFor="product-image" className="cursor-pointer">
               {imagePreview ? (
                 <div className="space-y-4">
-                  <img src={imagePreview} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="max-h-64 mx-auto rounded-lg"
+                  />
                   <p className="text-sm text-gray-400">Click to change image</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <span className="material-symbols-outlined text-6xl text-gray-600">cloud_upload</span>
+                  <span className="material-symbols-outlined text-6xl text-gray-600">
+                    cloud_upload
+                  </span>
                   <div>
                     <p className="text-white mb-2">
-                      <span className="text-[#e91e63]">Click to upload</span> or drag and drop
+                      <span className="text-[#e91e63]">Click to upload</span> or
+                      drag and drop
                     </p>
-                    <p className="text-sm text-gray-400">PNG, JPG or GIF (auto-compressed)</p>
+                    <p className="text-sm text-gray-400">
+                      PNG, JPG or GIF (auto-compressed)
+                    </p>
                   </div>
                 </div>
               )}
@@ -234,15 +250,19 @@ export default function AddProductForm() {
         {/* Product Details */}
         <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-2">Product Details</h2>
-          <p className="text-sm text-gray-400 mb-6">Enter the basic product information.</p>
-          
+          <p className="text-sm text-gray-400 mb-6">
+            Enter the basic product information.
+          </p>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Product Name</Label>
               <Input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="e.g., Gold Package or Gown #12A"
                 required
                 className="mt-2"
@@ -254,12 +274,16 @@ export default function AddProductForm() {
               <Input
                 type="text"
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
                 placeholder="e.g., Bridal Package, Gown, Makeup"
                 required
                 className="mt-2"
               />
-              <p className="text-xs text-gray-500 mt-1">Enter any category you want</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Enter any category you want
+              </p>
             </div>
 
             <div>
@@ -269,7 +293,9 @@ export default function AddProductForm() {
                 min="0"
                 step="1000"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
                 placeholder="0"
                 required
                 className="mt-2"
@@ -280,7 +306,9 @@ export default function AddProductForm() {
               <Label>Description</Label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
                 placeholder="Enter product details, features, or notes..."
                 className="w-full mt-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 text-white focus:ring-2 focus:ring-[#d4b896]/50 focus:outline-none resize-none"
@@ -304,7 +332,9 @@ export default function AddProductForm() {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="material-symbols-outlined animate-spin">refresh</span>
+                <span className="material-symbols-outlined animate-spin">
+                  refresh
+                </span>
                 Creating...
               </span>
             ) : (

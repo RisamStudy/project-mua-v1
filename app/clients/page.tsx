@@ -1,33 +1,36 @@
-import ClientsTable from './clients-table';
-import ClientsHeader from './clients-header';
-import { prisma } from '@/lib/prisma';
+import ClientsTable from "./clients-table";
+import ClientsHeader from "./clients-header";
+import { prisma } from "@/lib/prisma";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 async function getClients() {
   try {
     const clients = await prisma.client.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: 50, // Limit untuk performa
     });
 
-    return clients.map(client => ({
+    return clients.map((client) => ({
       id: client.id,
       brideName: client.brideName,
       groomName: client.groomName,
       primaryPhone: client.primaryPhone,
-      secondaryPhone: client.secondaryPhone || '-',
-      ceremonyDate: client.ceremonyDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: '2-digit' 
+      secondaryPhone: client.secondaryPhone || "-",
+      ceremonyDate: client.ceremonyDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
       }),
-      receptionDate: client.receptionDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: '2-digit' 
+      receptionDate: client.receptionDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
       }),
     }));
   } catch (error) {
-    console.error('Failed to fetch clients:', error);
+    console.error("Failed to fetch clients:", error);
     return [];
   }
 }

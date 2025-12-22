@@ -1,5 +1,8 @@
-import { prisma } from '@/lib/prisma';
-import CalendarView from './calendar-view';
+import { prisma } from "@/lib/prisma";
+import CalendarView from "./calendar-view";
+
+// Force dynamic rendering - jangan cache halaman ini
+export const dynamic = "force-dynamic";
 
 async function getAppointments() {
   try {
@@ -8,25 +11,27 @@ async function getAppointments() {
         client: true,
       },
       orderBy: {
-        startTime: 'asc',
+        startTime: "asc",
       },
     });
 
-    return appointments.map(apt => ({
+    return appointments.map((apt) => ({
       id: apt.id,
       title: apt.title,
       description: apt.description,
       startTime: apt.startTime.toISOString(),
       endTime: apt.endTime.toISOString(),
       color: apt.color,
-      client: apt.client ? {
-        id: apt.client.id,
-        brideName: apt.client.brideName,
-        groomName: apt.client.groomName,
-      } : null,
+      client: apt.client
+        ? {
+            id: apt.client.id,
+            brideName: apt.client.brideName,
+            groomName: apt.client.groomName,
+          }
+        : null,
     }));
   } catch (error) {
-    console.error('Failed to fetch appointments:', error);
+    console.error("Failed to fetch appointments:", error);
     return [];
   }
 }
@@ -40,12 +45,12 @@ async function getClients() {
         groomName: true,
       },
       orderBy: {
-        brideName: 'asc',
+        brideName: "asc",
       },
     });
     return clients;
   } catch (error) {
-    console.error('Failed to fetch clients:', error);
+    console.error("Failed to fetch clients:", error);
     return [];
   }
 }

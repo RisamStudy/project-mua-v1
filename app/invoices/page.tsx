@@ -1,6 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import InvoicesTable from './invoices-table';
-import InvoicesHeader from './invoices-header';
+import { prisma } from "@/lib/prisma";
+import InvoicesTable from "./invoices-table";
+import InvoicesHeader from "./invoices-header";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 async function getInvoices() {
   try {
@@ -14,11 +17,11 @@ async function getInvoices() {
         payment: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    return invoices.map(invoice => ({
+    return invoices.map((invoice) => ({
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
       clientName: `${invoice.order.client.brideName} & ${invoice.order.client.groomName}`,
@@ -26,15 +29,15 @@ async function getInvoices() {
       amount: invoice.amount.toString(),
       paidAmount: invoice.paidAmount.toString(),
       status: invoice.status,
-      issueDate: invoice.issueDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
+      issueDate: invoice.issueDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
       }),
       paymentNumber: invoice.payment?.paymentNumber || 0,
     }));
   } catch (error) {
-    console.error('Failed to fetch invoices:', error);
+    console.error("Failed to fetch invoices:", error);
     return [];
   }
 }

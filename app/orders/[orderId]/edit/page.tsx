@@ -1,6 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import EditOrderForm from './edit-order-form';
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import EditOrderForm from "./edit-order-form";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: {
@@ -36,7 +39,7 @@ async function getOrder(id: string) {
       paymentStatus: order.paymentStatus,
     };
   } catch (error) {
-    console.error('Failed to fetch order:', error);
+    console.error("Failed to fetch order:", error);
     return null;
   }
 }
@@ -51,22 +54,19 @@ async function getClients() {
         eventLocation: true,
       },
       orderBy: {
-        brideName: 'asc',
+        brideName: "asc",
       },
     });
     return clients;
   } catch (error) {
-    console.error('Failed to fetch clients:', error);
+    console.error("Failed to fetch clients:", error);
     return [];
   }
 }
 
 export default async function EditOrderPage({ params }: Props) {
   const { orderId } = await params;
-  const [order, clients] = await Promise.all([
-    getOrder(orderId),
-    getClients(),
-  ]);
+  const [order, clients] = await Promise.all([getOrder(orderId), getClients()]);
 
   if (!order) {
     notFound();

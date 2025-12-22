@@ -68,7 +68,7 @@ model Appointment {
 model Order {
   id                String    @id @default(cuid())
   orderNumber       String    @unique @default("") @map("order_number") @db.VarChar(50)
-  orderSequence     Int       @unique @default(autoincrement()) @map("order_sequence")
+  orderSequence     Int       @unique @map("order_sequence")
   clientId          String    @map("client_id")
   client            Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   eventLocation     String    @map("event_location") @db.Text

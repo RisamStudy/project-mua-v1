@@ -1,5 +1,8 @@
-import { prisma } from '@/lib/prisma';
-import AddOrderForm from './add-order-form';
+import { prisma } from "@/lib/prisma";
+import AddOrderForm from "./add-order-form";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 async function getClients() {
   try {
@@ -11,12 +14,12 @@ async function getClients() {
         eventLocation: true,
       },
       orderBy: {
-        brideName: 'asc',
+        brideName: "asc",
       },
     });
     return clients;
   } catch (error) {
-    console.error('Failed to fetch clients:', error);
+    console.error("Failed to fetch clients:", error);
     return [];
   }
 }
@@ -32,7 +35,8 @@ export default async function AddOrderPage() {
             Buat Pesanan Baru
           </h1>
           <p className="text-sm md:text-base text-gray-400">
-            Isi formulir di bawah ini untuk menambahkan pesanan baru untuk klien.
+            Isi formulir di bawah ini untuk menambahkan pesanan baru untuk
+            klien.
           </p>
         </div>
 

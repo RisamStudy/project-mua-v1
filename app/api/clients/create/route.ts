@@ -1,8 +1,12 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const body = await request.json();
     const {
       brideName,
@@ -21,9 +25,15 @@ export async function POST(request: Request) {
     } = body;
 
     // Validasi input
-    if (!brideName || !groomName || !primaryPhone || !ceremonyDate || !receptionDate) {
+    if (
+      !brideName ||
+      !groomName ||
+      !primaryPhone ||
+      !ceremonyDate ||
+      !receptionDate
+    ) {
       return NextResponse.json(
-        { message: 'Required fields are missing' },
+        { message: "Required fields are missing" },
         { status: 400 }
       );
     }
@@ -53,7 +63,7 @@ export async function POST(request: Request) {
       const createDateTime = (dateStr: string, timeStr: string | null) => {
         const date = new Date(dateStr);
         if (timeStr) {
-          const [hours, minutes] = timeStr.split(':');
+          const [hours, minutes] = timeStr.split(":");
           date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         } else {
           // Default time if not provided
@@ -74,7 +84,7 @@ export async function POST(request: Request) {
           startTime: ceremonyStart,
           endTime: ceremonyEnd,
           clientId: client.id,
-          color: '#9c27b0', // Purple for ceremony
+          color: "#9c27b0", // Purple for ceremony
         },
       });
 
@@ -90,7 +100,7 @@ export async function POST(request: Request) {
           startTime: receptionStart,
           endTime: receptionEnd,
           clientId: client.id,
-          color: '#e91e63', // Pink for reception
+          color: "#e91e63", // Pink for reception
         },
       });
 
@@ -99,13 +109,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Client and appointments created successfully',
+      message: "Client and appointments created successfully",
       data: result,
     });
-  } catch (error: any) {
-    console.error('Create client error:', error);
+  } catch (error: unknown) {
+    console.error("Create client error:", error);
     return NextResponse.json(
-      { message: error.message || 'Failed to create client' },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to create client",
+      },
       { status: 500 }
     );
   }

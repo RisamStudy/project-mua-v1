@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface Client {
   id: string;
@@ -43,30 +43,32 @@ interface FormData {
 export default function EditClientForm({ client }: { client: Client }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Format dates untuk input type="date"
   const formatDateForInput = (date: Date) => {
-    return new Date(date).toISOString().split('T')[0];
+    return new Date(date).toISOString().split("T")[0];
   };
 
   const [formData, setFormData] = useState<FormData>({
     brideName: client.brideName,
     groomName: client.groomName,
     primaryPhone: client.primaryPhone,
-    secondaryPhone: client.secondaryPhone || '',
+    secondaryPhone: client.secondaryPhone || "",
     brideAddress: client.brideAddress,
     groomAddress: client.groomAddress,
     brideParents: client.brideParents,
     groomParents: client.groomParents,
     ceremonyDate: formatDateForInput(client.ceremonyDate),
-    ceremonyTime: client.ceremonyTime || '',
+    ceremonyTime: client.ceremonyTime || "",
     receptionDate: formatDateForInput(client.receptionDate),
-    receptionTime: client.receptionTime || '',
+    receptionTime: client.receptionTime || "",
     eventLocation: client.eventLocation,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -76,25 +78,25 @@ export default function EditClientForm({ client }: { client: Client }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await fetch(`/api/clients/${client.id}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update client');
+        throw new Error(data.message || "Failed to update client");
       }
 
-      router.push('/clients');
+      router.push("/clients");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -112,14 +114,19 @@ export default function EditClientForm({ client }: { client: Client }) {
           <span>Back to Client List</span>
         </Link>
 
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Edit Client</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+          Edit Client
+        </h1>
         <p className="text-sm md:text-base text-gray-400">
           Perbarui detail untuk {client.brideName} & {client.groomName}.
         </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6 md:p-8">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6 md:p-8"
+      >
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg mb-6">
             {error}
@@ -128,7 +135,9 @@ export default function EditClientForm({ client }: { client: Client }) {
 
         {/* Client Information Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-white mb-6">Informasi Client</h2>
+          <h2 className="text-xl font-bold text-white mb-6">
+            Informasi Client
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bride's Name */}
             <div>
@@ -273,7 +282,9 @@ export default function EditClientForm({ client }: { client: Client }) {
 
         {/* Parents' Information Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-white mb-6">Informasi Orang Tua</h2>
+          <h2 className="text-xl font-bold text-white mb-6">
+            Informasi Orang Tua
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bride's Parents */}
             <div>
@@ -331,11 +342,13 @@ export default function EditClientForm({ client }: { client: Client }) {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="material-symbols-outlined animate-spin">refresh</span>
+                <span className="material-symbols-outlined animate-spin">
+                  refresh
+                </span>
                 Saving...
               </span>
             ) : (
-              'Save Changes'
+              "Save Changes"
             )}
           </Button>
         </div>

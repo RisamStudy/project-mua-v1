@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "cross-env NEXT_DISABLE_TURBOPACK=1 NEXT_PRIVATE_WORKER_COUNT=1 next build",
-    "start": "next start",
-    "lint": "eslint",
+    "start": "NODE_ENV=production node server.js",
+    "start:next": "next start",
+    "lint": "eslint --max-warnings 0",
     "prisma:generate": "npx prisma generate",
-    "prisma:migrate": "npx prisma migrate deploy"
+    "prisma:migrate": "npx prisma migrate deploy",
+    "create:account": "npx tsx ./scripts/create-admin.ts"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

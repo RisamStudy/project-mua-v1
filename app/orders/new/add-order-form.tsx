@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface Client {
   id: string;
@@ -16,12 +16,12 @@ interface Client {
 interface OrderItem {
   id: string;
   name: string;
-  quantity: string;  // Changed to string
-  price: string;     // Changed to string
+  quantity: string; // Changed to string
+  price: string; // Changed to string
   total: number;
 }
 
-const compressImage = (file: File, maxSizeMB: number = 10): Promise<string> => {
+const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -29,22 +29,22 @@ const compressImage = (file: File, maxSizeMB: number = 10): Promise<string> => {
       const img = new Image();
       img.src = e.target?.result as string;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-        
+
         const maxWidth = 1200;
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
+
+        const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -54,7 +54,7 @@ const compressImage = (file: File, maxSizeMB: number = 10): Promise<string> => {
               reader.onerror = reject;
             }
           },
-          'image/jpeg',
+          "image/jpeg",
           0.85
         );
       };
@@ -67,28 +67,28 @@ const compressImage = (file: File, maxSizeMB: number = 10): Promise<string> => {
 export default function AddOrderForm({ clients }: { clients: Client[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [selectedClient, setSelectedClient] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
+  const [error, setError] = useState("");
+
+  const [selectedClient, setSelectedClient] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
   const [items, setItems] = useState<OrderItem[]>([
-    { id: '1', name: '', quantity: '1', price: '0', total: 0 }
+    { id: "1", name: "", quantity: "1", price: "0", total: 0 },
   ]);
-  
-  const [stageModelPhoto, setStageModelPhoto] = useState<string>('');
-  const [tentColorPhoto, setTentColorPhoto] = useState<string>('');
-  const [dressPhotos, setDressPhotos] = useState<string[]>(['', '', '']);
-  
-  const [chairModel, setChairModel] = useState('');
-  const [softlensColor, setSoftlensColor] = useState('');
-  const [specialRequest, setSpecialRequest] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('Belum Lunas');
-  const [dpNumber, setDpNumber] = useState('1');
-  const [paidAmount, setPaidAmount] = useState('0');
+
+  const [stageModelPhoto, setStageModelPhoto] = useState<string>("");
+  const [tentColorPhoto, setTentColorPhoto] = useState<string>("");
+  const [dressPhotos, setDressPhotos] = useState<string[]>(["", "", ""]);
+
+  const [chairModel, setChairModel] = useState("");
+  const [softlensColor, setSoftlensColor] = useState("");
+  const [specialRequest, setSpecialRequest] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("Belum Lunas");
+  const [dpNumber, setDpNumber] = useState("1");
+  const [paidAmount, setPaidAmount] = useState("0");
 
   const handleClientChange = (clientId: string) => {
     setSelectedClient(clientId);
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId);
     if (client) {
       setEventLocation(client.eventLocation);
     }
@@ -101,23 +101,23 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      setError('Format foto harus JPG, JPEG, PNG, atau WebP');
+      setError("Format foto harus JPG, JPEG, PNG, atau WebP");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Ukuran foto maksimal 10MB');
+      setError("Ukuran foto maksimal 10MB");
       return;
     }
 
     try {
       const compressed = await compressImage(file);
       setter(compressed);
-      setError('');
-    } catch (err) {
-      setError('Gagal memproses foto');
+      setError("");
+    } catch {
+      setError("Gagal memproses foto");
     }
   };
 
@@ -128,14 +128,14 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      setError('Format foto harus JPG, JPEG, PNG, atau WebP');
+      setError("Format foto harus JPG, JPEG, PNG, atau WebP");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Ukuran foto maksimal 10MB');
+      setError("Ukuran foto maksimal 10MB");
       return;
     }
 
@@ -144,9 +144,9 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
       const newPhotos = [...dressPhotos];
       newPhotos[index] = compressed;
       setDressPhotos(newPhotos);
-      setError('');
-    } catch (err) {
-      setError('Gagal memproses foto');
+      setError("");
+    } catch {
+      setError("Gagal memproses foto");
     }
   };
 
@@ -157,35 +157,40 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
   };
 
   const addItem = () => {
-    setItems([...items, {
-      id: Date.now().toString(),
-      name: '',
-      quantity: '1',
-      price: '0',
-      total: 0
-    }]);
+    setItems([
+      ...items,
+      {
+        id: Date.now().toString(),
+        name: "",
+        quantity: "1",
+        price: "0",
+        total: 0,
+      },
+    ]);
   };
 
   const removeItem = (id: string) => {
     if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
+      setItems(items.filter((item) => item.id !== id));
     }
   };
 
   const updateItem = (id: string, field: keyof OrderItem, value: string) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'price') {
-          updated.total = calculateItemTotal(
-            field === 'quantity' ? value : item.quantity,
-            field === 'price' ? value : item.price
-          );
+    setItems(
+      items.map((item) => {
+        if (item.id === id) {
+          const updated = { ...item, [field]: value };
+          if (field === "quantity" || field === "price") {
+            updated.total = calculateItemTotal(
+              field === "quantity" ? value : item.quantity,
+              field === "price" ? value : item.price
+            );
+          }
+          return updated;
         }
-        return updated;
-      }
-      return item;
-    }));
+        return item;
+      })
+    );
   };
 
   const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -194,41 +199,41 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     if (!selectedClient) {
-      setError('Silakan pilih client');
+      setError("Silakan pilih client");
       setLoading(false);
       return;
     }
 
-    if (items.some(item => !item.name || parseFloat(item.price) <= 0)) {
-      setError('Silakan lengkapi semua detail item');
+    if (items.some((item) => !item.name || parseFloat(item.price) <= 0)) {
+      setError("Silakan lengkapi semua detail item");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: selectedClient,
           eventLocation,
-          items: items.map(({ id, quantity, price, ...item }) => ({
+          items: items.map(({ id: _id, quantity, price, ...item }) => ({
             ...item,
             quantity: parseInt(quantity),
             price: parseFloat(price),
-            total: item.total
+            total: item.total,
           })),
           stageModelPhoto: stageModelPhoto || null,
           chairModel: chairModel || null,
           tentColorPhoto: tentColorPhoto || null,
           softlensColor: softlensColor || null,
-          dressPhotos: dressPhotos.filter(p => p !== ''),
+          dressPhotos: dressPhotos.filter((p) => p !== ""),
           specialRequest: specialRequest || null,
           totalAmount: grandTotal,
-          paidAmount: parseFloat(paidAmount || '0'),
+          paidAmount: parseFloat(paidAmount || "0"),
           paymentStatus,
           dpNumber: parseInt(dpNumber),
         }),
@@ -237,14 +242,14 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create order');
+        throw new Error(data.message || "Failed to create order");
       }
 
-      router.push('/orders');
+      router.push("/orders");
       router.refresh();
-    } catch (err: any) {
-      console.error('Submit error:', err);
-      setError(err.message || 'Terjadi kesalahan');
+    } catch (err: unknown) {
+      console.error("Submit error:", err);
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -260,7 +265,9 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
 
       {/* Informasi Klien */}
       <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Informasi Klien</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+          Informasi Klien
+        </h2>
         <div className="space-y-4 sm:space-y-6">
           <div>
             <Label className="text-sm sm:text-base">Pilih Klien</Label>
@@ -270,8 +277,10 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
               required
               className="w-full h-10 sm:h-12 mt-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 sm:px-4 text-sm sm:text-base text-white focus:ring-2 focus:ring-[#d4b896]/50 focus:outline-none"
             >
-              <option value="">Pilih klien yang sudah ada atau tambahkan yang baru</option>
-              {clients.map(client => (
+              <option value="">
+                Pilih klien yang sudah ada atau tambahkan yang baru
+              </option>
+              {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.brideName} & {client.groomName}
                 </option>
@@ -295,18 +304,30 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
 
       {/* Item & Layanan yang Dipesan */}
       <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Item & Layanan yang Dipesan</h2>
-        
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+          Item & Layanan yang Dipesan
+        </h2>
+
         <div className="overflow-x-auto -mx-4 sm:mx-0">
           <div className="min-w-[600px] px-4 sm:px-0">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3">Item</th>
-                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-20 sm:w-24">Jml</th>
-                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-32 sm:w-40">Harga</th>
-                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-32 sm:w-40">Total</th>
-                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-16 sm:w-20">Aksi</th>
+                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3">
+                    Item
+                  </th>
+                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-20 sm:w-24">
+                    Jml
+                  </th>
+                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-32 sm:w-40">
+                    Harga
+                  </th>
+                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-32 sm:w-40">
+                    Total
+                  </th>
+                  <th className="text-left text-xs sm:text-sm font-medium text-gray-400 pb-2 sm:pb-3 w-16 sm:w-20">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -316,7 +337,9 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
                       <Input
                         type="text"
                         value={item.name}
-                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        onChange={(e) =>
+                          updateItem(item.id, "name", e.target.value)
+                        }
                         placeholder="Paket Rias Pengantin"
                         required
                         className="bg-[#1a1a1a] text-sm sm:text-base"
@@ -329,7 +352,9 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
                         min="1"
                         step="1"
                         value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                        onChange={(e) =>
+                          updateItem(item.id, "quantity", e.target.value)
+                        }
                         required
                         className="bg-[#1a1a1a] text-sm sm:text-base"
                       />
@@ -341,14 +366,16 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
                         min="0"
                         step="1"
                         value={item.price}
-                        onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                        onChange={(e) =>
+                          updateItem(item.id, "price", e.target.value)
+                        }
                         required
                         className="bg-[#1a1a1a] text-sm sm:text-base"
                       />
                     </td>
                     <td className="py-2 sm:py-3 px-1 sm:px-2">
                       <div className="px-2 sm:px-4 py-2 bg-[#1a1a1a] rounded-lg text-white text-xs sm:text-sm">
-                        Rp{item.total.toLocaleString('id-ID')}
+                        Rp{item.total.toLocaleString("id-ID")}
                       </div>
                     </td>
                     <td className="py-2 sm:py-3 px-1 sm:px-2">
@@ -358,7 +385,9 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
                         disabled={items.length === 1}
                         className="p-1.5 sm:p-2 text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
-                        <span className="material-symbols-outlined text-lg sm:text-xl">delete</span>
+                        <span className="material-symbols-outlined text-lg sm:text-xl">
+                          delete
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -373,19 +402,25 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
           onClick={addItem}
           className="mt-3 sm:mt-4 flex items-center gap-2 text-[#d4b896] hover:text-[#c4a886] transition-colors text-sm sm:text-base"
         >
-          <span className="material-symbols-outlined text-lg sm:text-xl">add</span>
+          <span className="material-symbols-outlined text-lg sm:text-xl">
+            add
+          </span>
           <span>Tambah Item</span>
         </button>
 
         <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[#2a2a2a] space-y-2 sm:space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-base sm:text-lg font-semibold text-white">Total</span>
+            <span className="text-base sm:text-lg font-semibold text-white">
+              Total
+            </span>
             <span className="text-xl sm:text-2xl font-bold text-white">
-              Rp{grandTotal.toLocaleString('id-ID')}
+              Rp{grandTotal.toLocaleString("id-ID")}
             </span>
           </div>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-            <span className="text-xs sm:text-sm text-gray-400">Uang yang Dibayar</span>
+            <span className="text-xs sm:text-sm text-gray-400">
+              Uang yang Dibayar
+            </span>
             <Input
               type="number"
               inputMode="numeric"
@@ -400,7 +435,7 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
           <div className="flex justify-between items-center text-xs sm:text-sm text-gray-400">
             <span>Sisa yang Harus Dibayar</span>
             <span className="font-semibold">
-              Rp{remainingAmount.toLocaleString('id-ID')}
+              Rp{remainingAmount.toLocaleString("id-ID")}
             </span>
           </div>
         </div>
@@ -408,12 +443,18 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
 
       {/* Detail Dekorasi Pernikahan */}
       <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Detail Dekorasi Pernikahan</h2>
-        
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+          Detail Dekorasi Pernikahan
+        </h2>
+
         <div className="space-y-4 sm:space-y-6">
           <div>
-            <Label className="text-sm sm:text-base">Foto Model Pelaminan (Opsional)</Label>
-            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">Upload foto model pelaminan (Max 10MB, JPG/PNG/WebP)</p>
+            <Label className="text-sm sm:text-base">
+              Foto Model Pelaminan (Opsional)
+            </Label>
+            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">
+              Upload foto model pelaminan (Max 10MB, JPG/PNG/WebP)
+            </p>
             <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               <div className="flex-1 w-full">
                 <input
@@ -425,14 +466,21 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
               </div>
               {stageModelPhoto && (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                  <img src={stageModelPhoto} alt="Preview" className="w-full h-full object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={stageModelPhoto}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
           </div>
 
           <div>
-            <Label className="text-sm sm:text-base">Kursi Pelaminan (Opsional)</Label>
+            <Label className="text-sm sm:text-base">
+              Kursi Pelaminan (Opsional)
+            </Label>
             <Input
               type="text"
               value={chairModel}
@@ -443,8 +491,12 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
           </div>
 
           <div>
-            <Label className="text-sm sm:text-base">Foto Warna Kain Tenda (Opsional)</Label>
-            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">Upload foto warna kain tenda (Max 10MB, JPG/PNG/WebP)</p>
+            <Label className="text-sm sm:text-base">
+              Foto Warna Kain Tenda (Opsional)
+            </Label>
+            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">
+              Upload foto warna kain tenda (Max 10MB, JPG/PNG/WebP)
+            </p>
             <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               <div className="flex-1 w-full">
                 <input
@@ -456,14 +508,21 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
               </div>
               {tentColorPhoto && (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                  <img src={tentColorPhoto} alt="Preview" className="w-full h-full object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={tentColorPhoto}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
           </div>
 
           <div>
-            <Label className="text-sm sm:text-base">Warna Tenda (Opsional)</Label>
+            <Label className="text-sm sm:text-base">
+              Warna Tenda (Opsional)
+            </Label>
             <Input
               type="text"
               value={softlensColor}
@@ -474,8 +533,12 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
           </div>
 
           <div>
-            <Label className="text-sm sm:text-base">Foto Gaun - 3 Foto (Opsional)</Label>
-            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">Upload hingga 3 foto gaun (Max 10MB per foto, JPG/PNG/WebP)</p>
+            <Label className="text-sm sm:text-base">
+              Foto Gaun - 3 Foto (Opsional)
+            </Label>
+            <p className="text-xs text-gray-400 mt-1 mb-2 sm:mb-3">
+              Upload hingga 3 foto gaun (Max 10MB per foto, JPG/PNG/WebP)
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {[0, 1, 2].map((index) => (
                 <div key={index} className="space-y-2">
@@ -488,7 +551,12 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
                   />
                   {dressPhotos[index] && (
                     <div className="w-full aspect-square rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                      <img src={dressPhotos[index]} alt={`Gaun ${index + 1}`} className="w-full h-full object-cover" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={dressPhotos[index]}
+                        alt={`Gaun ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
                 </div>
@@ -511,8 +579,10 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
 
       {/* Pembayaran */}
       <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Pembayaran</h2>
-        
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+          Pembayaran
+        </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div>
             <Label className="text-sm sm:text-base">Status Pembayaran</Label>
@@ -525,7 +595,7 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
               <option value="Lunas">Lunas</option>
             </select>
           </div>
-          
+
           <div>
             <Label className="text-sm sm:text-base">Pembayaran DP ke</Label>
             <select
@@ -555,7 +625,7 @@ export default function AddOrderForm({ clients }: { clients: Client[] }) {
           disabled={loading}
           className="w-full sm:w-auto bg-[#d4b896] hover:bg-[#c4a886] text-black px-6 sm:px-8 text-sm sm:text-base"
         >
-          {loading ? 'Membuat Pesanan...' : 'Buat Pesanan'}
+          {loading ? "Membuat Pesanan..." : "Buat Pesanan"}
         </Button>
       </div>
     </form>

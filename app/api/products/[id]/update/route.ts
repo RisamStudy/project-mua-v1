@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Decimal } from '@prisma/client/runtime/library';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
     const body = await request.json();
     const { name, category, description, price, imageUrl } = body;
@@ -14,7 +18,7 @@ export async function PUT(
     // Validasi input
     if (!name || !category || price === undefined) {
       return NextResponse.json(
-        { message: 'Name, category, and price are required' },
+        { message: "Name, category, and price are required" },
         { status: 400 }
       );
     }
@@ -26,7 +30,7 @@ export async function PUT(
 
     if (!existingProduct) {
       return NextResponse.json(
-        { message: 'Product not found' },
+        { message: "Product not found" },
         { status: 404 }
       );
     }
@@ -45,21 +49,22 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: 'Product updated successfully',
+      message: "Product updated successfully",
       data: product,
     });
-  } catch (error: any) {
-    console.error('Update product error:', error);
-    
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    console.error("Update product error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2025") {
       return NextResponse.json(
-        { message: 'Product not found' },
+        { message: "Product not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
-      { message: error.message || 'Failed to update product' },
+      { message: prismaError.message || "Failed to update product" },
       { status: 500 }
     );
   }

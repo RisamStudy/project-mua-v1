@@ -1,6 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import InvoicePreview from './invoice-preview';
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import InvoicePreview from "./invoice-preview";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: {
@@ -16,9 +19,10 @@ async function getInvoiceDetails(id: string) {
         order: {
           include: {
             client: true,
-            payments: {  // ✅ TAMBAHKAN INI!
+            payments: {
+              // ✅ TAMBAHKAN INI!
               orderBy: {
-                paymentNumber: 'asc',
+                paymentNumber: "asc",
               },
             },
           },
@@ -32,16 +36,17 @@ async function getInvoiceDetails(id: string) {
     return {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      issueDate: invoice.issueDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
+      issueDate: invoice.issueDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
       }),
-      dueDate: invoice.dueDate?.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-      }) || null,
+      dueDate:
+        invoice.dueDate?.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }) || null,
       amount: invoice.amount.toString(),
       paidAmount: invoice.paidAmount.toString(),
       status: invoice.status,
@@ -50,14 +55,15 @@ async function getInvoiceDetails(id: string) {
         orderNumber: invoice.order.orderNumber,
         items: invoice.order.items,
         totalAmount: invoice.order.totalAmount.toString(),
-        payments: invoice.order.payments.map(p => ({  // ✅ TAMBAHKAN INI!
+        payments: invoice.order.payments.map((p) => ({
+          // ✅ TAMBAHKAN INI!
           id: p.id,
           paymentNumber: p.paymentNumber,
           amount: p.amount.toString(),
-          paymentDate: p.paymentDate.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit',
+          paymentDate: p.paymentDate.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
           }),
           paymentMethod: p.paymentMethod,
         })),
@@ -69,20 +75,25 @@ async function getInvoiceDetails(id: string) {
         brideAddress: invoice.order.client.brideAddress,
         eventLocation: invoice.order.client.eventLocation,
       },
-      payment: invoice.payment ? {
-        id: invoice.payment.id,  // ✅ TAMBAHKAN id
-        paymentNumber: invoice.payment.paymentNumber,
-        amount: invoice.payment.amount.toString(),
-        paymentDate: invoice.payment.paymentDate.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-        }),
-        paymentMethod: invoice.payment.paymentMethod,
-      } : null,
+      payment: invoice.payment
+        ? {
+            id: invoice.payment.id, // ✅ TAMBAHKAN id
+            paymentNumber: invoice.payment.paymentNumber,
+            amount: invoice.payment.amount.toString(),
+            paymentDate: invoice.payment.paymentDate.toLocaleDateString(
+              "en-US",
+              {
+                year: "numeric",
+                month: "short",
+                day: "2-digit",
+              }
+            ),
+            paymentMethod: invoice.payment.paymentMethod,
+          }
+        : null,
     };
   } catch (error) {
-    console.error('Failed to fetch invoice:', error);
+    console.error("Failed to fetch invoice:", error);
     return null;
   }
 }

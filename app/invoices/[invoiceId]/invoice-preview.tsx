@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface PaymentData {
   id: string;
@@ -23,7 +23,7 @@ interface InvoiceData {
   notes: string | null;
   order: {
     orderNumber: string;
-    items: any;
+    items: unknown;
     totalAmount: string;
     payments: PaymentData[];
   };
@@ -37,14 +37,35 @@ interface InvoiceData {
   payment: PaymentData | null;
 }
 
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
 export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
   const [downloading, setDownloading] = useState(false);
 
-  const items = Array.isArray(invoice.order.items) ? invoice.order.items : [];
+  // Parse items - handle both array and stringified JSON
+  const parseItems = (itemsData: unknown): OrderItem[] => {
+    if (Array.isArray(itemsData)) return itemsData as OrderItem[];
+    if (typeof itemsData === "string") {
+      try {
+        const parsed = JSON.parse(itemsData);
+        return Array.isArray(parsed) ? (parsed as OrderItem[]) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const items = parseItems(invoice.order.items);
   const payments = invoice.order?.payments || [];
 
   const formatCurrency = (amount: string) => {
-    return `Rp ${parseFloat(amount).toLocaleString('id-ID')}`;
+    return `Rp ${parseFloat(amount).toLocaleString("id-ID")}`;
   };
 
   const handleDownloadPDF = async () => {
@@ -52,14 +73,14 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
     try {
       window.print();
     } catch (error) {
-      console.error('Download error:', error);
+      console.error("Download error:", error);
     } finally {
       setDownloading(false);
     }
   };
 
-  const subtotal = items.reduce((sum: number, item: any) => {
-    return sum + parseFloat(item.total || 0);
+  const subtotal = items.reduce((sum: number, item: OrderItem) => {
+    return sum + parseFloat(item.total?.toString() || "0");
   }, 0);
 
   const totalDP = payments.reduce((sum: number, payment: PaymentData) => {
@@ -86,7 +107,8 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               Pratinjau & Generator Faktur
             </h1>
             <p className="text-sm md:text-base text-gray-400">
-              Tinjau dan selesaikan faktur untuk Pesanan #{invoice.order.orderNumber}.
+              Tinjau dan selesaikan faktur untuk Pesanan #
+              {invoice.order.orderNumber}.
             </p>
           </div>
           <Button
@@ -96,7 +118,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
           >
             {downloading ? (
               <span className="flex items-center gap-2">
-                <span className="material-symbols-outlined animate-spin">refresh</span>
+                <span className="material-symbols-outlined animate-spin">
+                  refresh
+                </span>
                 Generating...
               </span>
             ) : (
@@ -120,27 +144,32 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                 {/* Logo & Title */}
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0 w-14 h-14">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/logo.png"
                       alt="RORO MUA Logo"
                       className="w-full h-full object-contain"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.style.display = "none";
                       }}
                     />
                   </div>
                   <div>
                     <h1 className="text-lg font-bold mb-0.5">FAKTUR</h1>
-                    <p className="text-xs text-gray-600">#{invoice.invoiceNumber}</p>
+                    <p className="text-xs text-gray-600">
+                      #{invoice.invoiceNumber}
+                    </p>
                   </div>
                 </div>
-                
+
                 {/* Company Info */}
                 <div className="border-t pt-3">
                   <h2 className="text-sm font-bold mb-1">RORO MUA</h2>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    Perumahan Kaliwulu blok AC no.1<br/>
-                    Kec.Plered Kab Cirebon<br/>
+                    Perumahan Kaliwulu blok AC no.1
+                    <br />
+                    Kec.Plered Kab Cirebon
+                    <br />
                     (Depan Lapangan)
                   </p>
                 </div>
@@ -150,26 +179,39 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               <div className="hidden sm:flex justify-between items-start gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/logo.png"
                       alt="RORO MUA Logo"
                       className="w-full h-full object-contain"
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.style.display = "none";
                       }}
                     />
                   </div>
                   <div>
-                    <h1 className="text-xl md:text-2xl font-bold mb-1">FAKTUR</h1>
-                    <p className="text-xs md:text-sm text-gray-600">#{invoice.invoiceNumber}</p>
+                    <h1 className="text-xl md:text-2xl font-bold mb-1">
+                      FAKTUR
+                    </h1>
+                    <p className="text-xs md:text-sm text-gray-600">
+                      #{invoice.invoiceNumber}
+                    </p>
                   </div>
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <h2 className="text-sm md:text-base font-bold mb-1">RORO MUA</h2>
-                  <p className="text-xs text-gray-600 leading-tight">Perumahan Kaliwulu blok AC no.1</p>
-                  <p className="text-xs text-gray-600 leading-tight">Kec.Plered Kab Cirebon</p>
-                  <p className="text-xs text-gray-600 leading-tight">(Depan Lapangan)</p>
+                  <h2 className="text-sm md:text-base font-bold mb-1">
+                    RORO MUA
+                  </h2>
+                  <p className="text-xs text-gray-600 leading-tight">
+                    Perumahan Kaliwulu blok AC no.1
+                  </p>
+                  <p className="text-xs text-gray-600 leading-tight">
+                    Kec.Plered Kab Cirebon
+                  </p>
+                  <p className="text-xs text-gray-600 leading-tight">
+                    (Depan Lapangan)
+                  </p>
                 </div>
               </div>
             </div>
@@ -182,9 +224,15 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                   <h3 className="text-xs font-bold mb-2 text-gray-500 uppercase tracking-wide">
                     Diterbitkan Kepada
                   </h3>
-                  <p className="font-bold text-sm mb-1">{invoice.client.brideName}</p>
-                  <p className="text-xs text-gray-600 leading-relaxed">{invoice.client.brideAddress}</p>
-                  <p className="text-xs text-gray-600">{invoice.client.primaryPhone}</p>
+                  <p className="font-bold text-sm mb-1">
+                    {invoice.client.brideName}
+                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {invoice.client.brideAddress}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {invoice.client.primaryPhone}
+                  </p>
                 </div>
 
                 <div>
@@ -204,7 +252,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     )}
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-600">ID Pesanan:</span>
-                      <span className="font-semibold">{invoice.order.orderNumber}</span>
+                      <span className="font-semibold">
+                        {invoice.order.orderNumber}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -216,9 +266,15 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                   <h3 className="text-xs font-bold mb-3 text-gray-500 uppercase tracking-wide">
                     Diterbitkan Kepada
                   </h3>
-                  <p className="font-bold text-sm md:text-base mb-1">{invoice.client.brideName}</p>
-                  <p className="text-xs md:text-sm text-gray-600">{invoice.client.brideAddress}</p>
-                  <p className="text-xs md:text-sm text-gray-600">{invoice.client.primaryPhone}</p>
+                  <p className="font-bold text-sm md:text-base mb-1">
+                    {invoice.client.brideName}
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {invoice.client.brideAddress}
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {invoice.client.primaryPhone}
+                  </p>
                 </div>
 
                 <div className="text-right">
@@ -238,7 +294,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     )}
                     <div className="flex justify-between text-xs md:text-sm">
                       <span className="text-gray-600">ID Pesanan:</span>
-                      <span className="font-semibold">{invoice.order.orderNumber}</span>
+                      <span className="font-semibold">
+                        {invoice.order.orderNumber}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -266,10 +324,14 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item: any, idx: number) => (
+                    {items.map((item: OrderItem, idx: number) => (
                       <tr key={idx} className="border-b border-gray-100">
-                        <td className="py-3 md:py-4 text-xs md:text-sm pr-2">{item.name}</td>
-                        <td className="py-3 md:py-4 text-center text-xs md:text-sm">{item.quantity}</td>
+                        <td className="py-3 md:py-4 text-xs md:text-sm pr-2">
+                          {item.name}
+                        </td>
+                        <td className="py-3 md:py-4 text-center text-xs md:text-sm">
+                          {item.quantity}
+                        </td>
                         <td className="py-3 md:py-4 text-right text-xs md:text-sm">
                           {formatCurrency(item.price.toString())}
                         </td>
@@ -289,23 +351,35 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                 {/* Subtotal */}
                 <div className="flex justify-between py-2 text-xs md:text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-semibold">{formatCurrency(subtotal.toString())}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(subtotal.toString())}
+                  </span>
                 </div>
 
                 {/* DP List */}
-                {payments.length > 0 && payments.map((payment) => (
-                  <div key={payment.id} className="flex justify-between py-2 text-xs md:text-sm">
-                    <span className="text-gray-600">DP{payment.paymentNumber}</span>
-                    <span className="font-semibold">{formatCurrency(payment.amount)}</span>
-                  </div>
-                ))}
+                {payments.length > 0 &&
+                  payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex justify-between py-2 text-xs md:text-sm"
+                    >
+                      <span className="text-gray-600">
+                        DP{payment.paymentNumber}
+                      </span>
+                      <span className="font-semibold">
+                        {formatCurrency(payment.amount)}
+                      </span>
+                    </div>
+                  ))}
 
                 {/* Divider */}
                 <div className="border-t-2 border-gray-200 my-2"></div>
 
                 {/* Jumlah Total */}
                 <div className="flex justify-between py-2">
-                  <span className="font-bold text-sm md:text-base">Jumlah Total</span>
+                  <span className="font-bold text-sm md:text-base">
+                    Jumlah Total
+                  </span>
                   <span className="font-bold text-sm md:text-base">
                     {formatCurrency(subtotal.toString())}
                   </span>
@@ -313,7 +387,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
                 {/* Total Dibayar */}
                 <div className="flex justify-between py-2 bg-green-50 px-3 rounded">
-                  <span className="text-green-700 font-semibold text-xs md:text-sm">Total Dibayar</span>
+                  <span className="text-green-700 font-semibold text-xs md:text-sm">
+                    Total Dibayar
+                  </span>
                   <span className="text-green-700 font-bold text-xs md:text-sm">
                     {formatCurrency(totalDP.toString())}
                   </span>
@@ -321,7 +397,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
                 {/* Sisa Tagihan */}
                 <div className="flex justify-between py-2 md:py-3 bg-gray-100 px-3 rounded">
-                  <span className="font-bold text-sm md:text-base">Sisa Tagihan</span>
+                  <span className="font-bold text-sm md:text-base">
+                    Sisa Tagihan
+                  </span>
                   <span className="font-bold text-sm md:text-base">
                     {formatCurrency(sisaPembayaran.toString())}
                   </span>
@@ -335,7 +413,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                 <h3 className="text-xs font-bold mb-2 text-gray-500 uppercase tracking-wide">
                   Catatan / Keterangan
                 </h3>
-                <p className="text-xs md:text-sm text-gray-600">{invoice.notes}</p>
+                <p className="text-xs md:text-sm text-gray-600">
+                  {invoice.notes}
+                </p>
               </div>
             )}
           </div>
@@ -344,11 +424,15 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
         {/* Invoice Settings Sidebar */}
         <div className="space-y-6 print:hidden">
           <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Pengaturan Faktur</h2>
-            
+            <h2 className="text-xl font-bold text-white mb-6">
+              Pengaturan Faktur
+            </h2>
+
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400 mb-2 block">Syarat Pembayaran</label>
+                <label className="text-sm text-gray-400 mb-2 block">
+                  Syarat Pembayaran
+                </label>
                 <select className="w-full h-10 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-white text-sm">
                   <option>Net 7 hari</option>
                   <option>Net 14 hari</option>
@@ -357,7 +441,9 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-2 block">Mata uang</label>
+                <label className="text-sm text-gray-400 mb-2 block">
+                  Mata uang
+                </label>
                 <select className="w-full h-10 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-white text-sm">
                   <option>IDR - Indonesian Rupiah</option>
                   <option>USD - US Dollar</option>
@@ -369,13 +455,22 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
           {/* Payment History */}
           {payments.length > 0 && (
             <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Riwayat Pembayaran</h2>
+              <h2 className="text-xl font-bold text-white mb-6">
+                Riwayat Pembayaran
+              </h2>
               <div className="space-y-3">
                 {payments.map((payment) => (
-                  <div key={payment.id} className="pb-3 border-b border-[#2a2a2a] last:border-0">
+                  <div
+                    key={payment.id}
+                    className="pb-3 border-b border-[#2a2a2a] last:border-0"
+                  >
                     <div className="flex justify-between items-start mb-1">
-                      <p className="text-white font-medium">DP{payment.paymentNumber}</p>
-                      <p className="text-white font-semibold">{formatCurrency(payment.amount)}</p>
+                      <p className="text-white font-medium">
+                        DP{payment.paymentNumber}
+                      </p>
+                      <p className="text-white font-semibold">
+                        {formatCurrency(payment.amount)}
+                      </p>
                     </div>
                     <p className="text-xs text-gray-400">
                       {payment.paymentDate} via {payment.paymentMethod}
@@ -388,10 +483,12 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
           {/* Notes */}
           <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Catatan / Keterangan</h2>
+            <h2 className="text-xl font-bold text-white mb-6">
+              Catatan / Keterangan
+            </h2>
             <p className="text-sm text-gray-300">
-              Terima kasih telah memilih Roro MUA untuk hari istimewa Anda!
-              Kami sangat menghargai kepercayaan Anda.
+              Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami
+              sangat menghargai kepercayaan Anda.
             </p>
           </div>
         </div>

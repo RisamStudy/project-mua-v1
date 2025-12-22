@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   request: Request,
@@ -15,20 +15,21 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Appointment deleted successfully',
+      message: "Appointment deleted successfully",
     });
-  } catch (error: any) {
-    console.error('Delete appointment error:', error);
-    
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    console.error("Delete appointment error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2025") {
       return NextResponse.json(
-        { message: 'Appointment not found' },
+        { message: "Appointment not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
-      { message: error.message || 'Failed to delete appointment' },
+      { message: prismaError.message || "Failed to delete appointment" },
       { status: 500 }
     );
   }

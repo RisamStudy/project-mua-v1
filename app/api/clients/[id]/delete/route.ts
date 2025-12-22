@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
 
     // Cek apakah client ada
@@ -15,7 +19,7 @@ export async function DELETE(
 
     if (!client) {
       return NextResponse.json(
-        { message: 'Client not found' },
+        { message: "Client not found" },
         { status: 404 }
       );
     }
@@ -27,20 +31,21 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Client deleted successfully',
+      message: "Client deleted successfully",
     });
-  } catch (error: any) {
-    console.error('Delete client error:', error);
-    
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    console.error("Delete client error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2025") {
       return NextResponse.json(
-        { message: 'Client not found' },
+        { message: "Client not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
-      { message: error.message || 'Failed to delete client' },
+      { message: prismaError.message || "Failed to delete client" },
       { status: 500 }
     );
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import DeleteModal from '@/components/ui/delete-modal';
-import Toast from '@/components/ui/toast';
+import { useState } from "react";
+import Link from "next/link";
+import DeleteModal from "@/components/ui/delete-modal";
+import Toast from "@/components/ui/toast";
 
 interface Order {
   id: string;
@@ -19,7 +19,7 @@ interface Order {
 }
 
 export default function OrdersTable({ orders }: { orders: Order[] }) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     orderId: string | null;
@@ -33,11 +33,11 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
   const [toast, setToast] = useState<{
     isOpen: boolean;
     message: string;
-    type: 'success' | 'error';
+    type: "success" | "error";
   }>({
     isOpen: false,
-    message: '',
-    type: 'success',
+    message: "",
+    type: "success",
   });
 
   const filteredOrders = orders.filter(
@@ -48,7 +48,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
   );
 
   const formatCurrency = (amount: string) => {
-    return `Rp ${parseFloat(amount).toLocaleString('id-ID')}`;
+    return `Rp ${parseFloat(amount).toLocaleString("id-ID")}`;
   };
 
   const handleDelete = async () => {
@@ -56,31 +56,34 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
 
     setDeleting(true);
     try {
-      const response = await fetch(`/api/orders/${deleteModal.orderId}/delete`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/orders/${deleteModal.orderId}/delete`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         setDeleteModal({ isOpen: false, orderId: null, orderNumber: null });
         setToast({
           isOpen: true,
-          message: 'Order deleted successfully',
-          type: 'success',
+          message: "Order deleted successfully",
+          type: "success",
         });
         setTimeout(() => window.location.reload(), 1500);
       } else {
         const data = await response.json();
         setToast({
           isOpen: true,
-          message: data.message || 'Failed to delete order',
-          type: 'error',
+          message: data.message || "Failed to delete order",
+          type: "error",
         });
       }
-    } catch (error) {
+    } catch {
       setToast({
         isOpen: true,
-        message: 'Failed to delete order',
-        type: 'error',
+        message: "Failed to delete order",
+        type: "error",
       });
     } finally {
       setDeleting(false);
@@ -149,24 +152,40 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
             <tbody className="divide-y divide-[#2a2a2a]">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                    {searchQuery ? 'Tidak ada pesanan yang ditemukan.' : 'Belum ada pesanan. Buat pesanan pertama!'}
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-400"
+                  >
+                    {searchQuery
+                      ? "Tidak ada pesanan yang ditemukan."
+                      : "Belum ada pesanan. Buat pesanan pertama!"}
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-[#1a1a1a] transition-colors">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-[#1a1a1a] transition-colors"
+                  >
                     <td className="px-6 py-4 text-white">{order.brideName}</td>
-                    <td className="px-6 py-4 text-gray-300">{order.groomName}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatCurrency(order.dp1)}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatCurrency(order.dp2)}</td>
-                    <td className="px-6 py-4 text-gray-300">{formatCurrency(order.remainingAmount)}</td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {order.groomName}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {formatCurrency(order.dp1)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {formatCurrency(order.dp2)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {formatCurrency(order.remainingAmount)}
+                    </td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          order.paymentStatus === 'Lunas'
-                            ? 'bg-green-500/10 text-green-500'
-                            : 'bg-yellow-500/10 text-yellow-500'
+                          order.paymentStatus === "Lunas"
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-yellow-500/10 text-yellow-500"
                         }`}
                       >
                         {order.paymentStatus}
@@ -179,25 +198,33 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                           className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
                           title="View details"
                         >
-                          <span className="material-symbols-outlined text-xl">visibility</span>
+                          <span className="material-symbols-outlined text-xl">
+                            visibility
+                          </span>
                         </Link>
                         <Link
                           href={`/orders/${order.id}/edit`}
                           className="p-2 text-gray-400 hover:text-[#d4b896] transition-colors"
                           title="Edit order"
                         >
-                          <span className="material-symbols-outlined text-xl">edit</span>
+                          <span className="material-symbols-outlined text-xl">
+                            edit
+                          </span>
                         </Link>
                         <button
-                          onClick={() => setDeleteModal({
-                            isOpen: true,
-                            orderId: order.id,
-                            orderNumber: order.orderNumber,
-                          })}
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              orderId: order.id,
+                              orderNumber: order.orderNumber,
+                            })
+                          }
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete order"
                         >
-                          <span className="material-symbols-outlined text-xl">delete</span>
+                          <span className="material-symbols-outlined text-xl">
+                            delete
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -211,7 +238,9 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
 
       <DeleteModal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, orderId: null, orderNumber: null })}
+        onClose={() =>
+          setDeleteModal({ isOpen: false, orderId: null, orderNumber: null })
+        }
         onConfirm={handleDelete}
         title="Delete Order"
         description={`Apakah Anda yakin ingin menghapus pesanan ${deleteModal.orderNumber}? Tindakan ini tidak dapat dibatalkan.`}

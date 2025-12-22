@@ -1,6 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import EditProductForm from './edit-product-form';
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import EditProductForm from "./edit-product-form";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: {
@@ -29,7 +32,7 @@ async function getProduct(id: string) {
       updatedAt: product.updatedAt.toISOString(),
     };
   } catch (error) {
-    console.error('Failed to fetch product:', error);
+    console.error("Failed to fetch product:", error);
     return null;
   }
 }

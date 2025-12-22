@@ -1,28 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { OrderWithClient } from '@/lib/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Printer,
-  MoreVertical,
-  Search,
-  Filter
-} from 'lucide-react';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { OrderWithClient } from "@/lib/types";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { Eye, Edit, Trash2, Printer, Search } from "lucide-react";
+import Link from "next/link";
 
 interface OrdersTableProps {
   initialOrders: OrderWithClient[];
   total: number;
 }
 
-export default function OrdersTable({ initialOrders, total }: OrdersTableProps) {
+export default function OrdersTable({
+  initialOrders,
+  total,
+}: OrdersTableProps) {
   const [orders, setOrders] = useState<OrderWithClient[]>(initialOrders);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(Math.ceil(total / 10));
@@ -32,18 +27,18 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '10',
+        limit: "10",
         ...(search && { search }),
-        ...(statusFilter && { status: statusFilter })
+        ...(statusFilter && { status: statusFilter }),
       });
 
       const response = await fetch(`/api/orders/list?${params}`);
       const data = await response.json();
-      
+
       setOrders(data.orders);
       setTotalPages(data.pagination.totalPages);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
@@ -51,6 +46,7 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
 
   useEffect(() => {
     fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, statusFilter]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -61,30 +57,30 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'LUNAS':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'DP1':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'DP2':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case "LUNAS":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "DP1":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "DP2":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const handleDelete = async (orderId: string) => {
-    if (!confirm('Are you sure you want to delete this order?')) return;
-    
+    if (!confirm("Are you sure you want to delete this order?")) return;
+
     try {
       const response = await fetch(`/api/orders/${orderId}/delete`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
-      
+
       if (response.ok) {
         fetchOrders();
       }
     } catch (error) {
-      console.error('Error deleting order:', error);
+      console.error("Error deleting order:", error);
     }
   };
 
@@ -94,10 +90,14 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
       <div className="p-6 border-b">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
-            <p className="text-gray-600">Manage all client orders and track payments</p>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Order Management
+            </h2>
+            <p className="text-gray-600">
+              Manage all client orders and track payments
+            </p>
           </div>
-          
+
           <Link
             href="/orders/new"
             className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -213,20 +213,29 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.paymentStatus)}`}>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        order.paymentStatus
+                      )}`}
+                    >
                       {order.paymentStatus}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => window.open(`/invoices/${order.id}/generate`, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            `/invoices/${order.id}/generate`,
+                            "_blank"
+                          )
+                        }
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         title="Print Invoice"
                       >
                         <Printer className="h-4 w-4" />
                       </button>
-                      
+
                       <Link
                         href={`/orders/${order.id}`}
                         className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
@@ -234,7 +243,7 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
-                      
+
                       <Link
                         href={`/orders/${order.id}/edit`}
                         className="p-2 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
@@ -242,7 +251,7 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
                       >
                         <Edit className="h-4 w-4" />
                       </Link>
-                      
+
                       <button
                         onClick={() => handleDelete(order.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -263,15 +272,16 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
       {totalPages > 1 && (
         <div className="px-6 py-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
+            Showing{" "}
+            <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{" "}
             <span className="font-medium">
               {Math.min(currentPage * 10, total * 10)}
-            </span>{' '}
+            </span>{" "}
             of <span className="font-medium">{total}</span> results
           </div>
           <div className="flex space-x-2">
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -288,15 +298,15 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
               } else {
                 pageNum = currentPage - 2 + i;
               }
-              
+
               return (
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-1 border rounded ${
                     currentPage === pageNum
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'hover:bg-gray-50'
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "hover:bg-gray-50"
                   }`}
                 >
                   {pageNum}
@@ -304,7 +314,7 @@ export default function OrdersTable({ initialOrders, total }: OrdersTableProps) 
               );
             })}
             <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >

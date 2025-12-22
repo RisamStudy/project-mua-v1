@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-){
+) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
 
     // Delete product
@@ -15,20 +19,21 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Product deleted successfully',
+      message: "Product deleted successfully",
     });
-  } catch (error: any) {
-    console.error('Delete product error:', error);
-    
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    console.error("Delete product error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2025") {
       return NextResponse.json(
-        { message: 'Product not found' },
+        { message: "Product not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(
-      { message: error.message || 'Failed to delete product' },
+      { message: prismaError.message || "Failed to delete product" },
       { status: 500 }
     );
   }

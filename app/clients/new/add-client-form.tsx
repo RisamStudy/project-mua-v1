@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface FormData {
   brideName: string;
@@ -25,24 +25,26 @@ interface FormData {
 export default function AddClientForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState<FormData>({
-    brideName: '',
-    groomName: '',
-    primaryPhone: '',
-    secondaryPhone: '',
-    brideAddress: '',
-    groomAddress: '',
-    brideParents: '',
-    groomParents: '',
-    ceremonyDate: '',
-    ceremonyTime: '',
-    receptionDate: '',
-    receptionTime: '',
-    eventLocation: '',
+    brideName: "",
+    groomName: "",
+    primaryPhone: "",
+    secondaryPhone: "",
+    brideAddress: "",
+    groomAddress: "",
+    brideParents: "",
+    groomParents: "",
+    ceremonyDate: "",
+    ceremonyTime: "",
+    receptionDate: "",
+    receptionTime: "",
+    eventLocation: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -52,32 +54,35 @@ export default function AddClientForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/clients/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/clients/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create client');
+        throw new Error(data.message || "Failed to create client");
       }
 
-      router.push('/clients');
+      router.push("/clients");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6 md:p-8">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6 md:p-8"
+    >
       {error && (
         <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg mb-6">
           {error}
@@ -279,7 +284,9 @@ export default function AddClientForm() {
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined animate-spin">refresh</span>
+              <span className="material-symbols-outlined animate-spin">
+                refresh
+              </span>
               Menambahkan...
             </span>
           ) : (

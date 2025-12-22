@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+import { JsonValue } from "@prisma/client/runtime/library";
 
 interface Client {
   id: string;
@@ -14,20 +16,27 @@ interface Client {
   eventLocation: string;
 }
 
+interface OrderItemData {
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
 interface Order {
   id: string;
   orderNumber: string;
   clientId: string;
   eventLocation: string;
-  items: any;
+  items: JsonValue;
   stageModelPhoto: string | null;
   chairModel: string | null;
   tentColorPhoto: string | null;
   softlensColor: string | null;
-  dressPhotos: any;
+  dressPhotos: JsonValue;
   specialRequest: string | null;
-  totalAmount: any;
-  paidAmount: any;
+  totalAmount: string;
+  paidAmount: string;
   paymentStatus: string;
 }
 
@@ -47,22 +56,22 @@ const compressImage = (file: File): Promise<string> => {
       const img = new Image();
       img.src = e.target?.result as string;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-        
+
         const maxWidth = 1200;
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
+
+        const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -72,7 +81,7 @@ const compressImage = (file: File): Promise<string> => {
               reader.onerror = reject;
             }
           },
-          'image/jpeg',
+          "image/jpeg",
           0.85
         );
       };
@@ -82,36 +91,69 @@ const compressImage = (file: File): Promise<string> => {
   });
 };
 
-export default function EditOrderForm({ order, clients }: { order: Order; clients: Client[] }) {
+export default function EditOrderForm({
+  order,
+  clients,
+}: {
+  order: Order;
+  clients: Client[];
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
+  // Parse items - handle both array and stringified JSON
+  const parseItems = (itemsData: JsonValue): OrderItemData[] => {
+    if (Array.isArray(itemsData))
+      return itemsData as unknown as OrderItemData[];
+    if (typeof itemsData === "string") {
+      try {
+        const parsed = JSON.parse(itemsData);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Parse dressPhotos from JsonValue
+  const parseDressPhotos = (photos: JsonValue): string[] => {
+    if (Array.isArray(photos)) {
+      return [...(photos as string[]), "", "", ""].slice(0, 3);
+    }
+    return ["", "", ""];
+  };
+
   const [selectedClient, setSelectedClient] = useState(order.clientId);
   const [eventLocation, setEventLocation] = useState(order.eventLocation);
   const [items, setItems] = useState<OrderItem[]>(
-    Array.isArray(order.items) ? order.items.map((item: any, idx: number) => ({
+    parseItems(order.items).map((item, idx) => ({
       id: idx.toString(),
-      ...item
-    })) : []
+      ...item,
+    }))
   );
-  
-  const [stageModelPhoto, setStageModelPhoto] = useState<string>(order.stageModelPhoto || '');
-  const [tentColorPhoto, setTentColorPhoto] = useState<string>(order.tentColorPhoto || '');
+
+  const [stageModelPhoto, setStageModelPhoto] = useState<string>(
+    order.stageModelPhoto || ""
+  );
+  const [tentColorPhoto, setTentColorPhoto] = useState<string>(
+    order.tentColorPhoto || ""
+  );
   const [dressPhotos, setDressPhotos] = useState<string[]>(
-    order.dressPhotos && Array.isArray(order.dressPhotos) 
-      ? [...order.dressPhotos, '', '', ''].slice(0, 3)
-      : ['', '', '']
+    parseDressPhotos(order.dressPhotos)
   );
-  
-  const [chairModel, setChairModel] = useState(order.chairModel || '');
-  const [softlensColor, setSoftlensColor] = useState(order.softlensColor || '');
-  const [specialRequest, setSpecialRequest] = useState(order.specialRequest || '');
+
+  const [chairModel, setChairModel] = useState(order.chairModel || "");
+  const [softlensColor, setSoftlensColor] = useState(order.softlensColor || "");
+  const [specialRequest, setSpecialRequest] = useState(
+    order.specialRequest || ""
+  );
   const [paymentStatus, setPaymentStatus] = useState(order.paymentStatus);
 
   const handleClientChange = (clientId: string) => {
     setSelectedClient(clientId);
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId);
     if (client) {
       setEventLocation(client.eventLocation);
     }
@@ -124,23 +166,23 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      setError('Format foto harus JPG, JPEG, PNG, atau WebP');
+      setError("Format foto harus JPG, JPEG, PNG, atau WebP");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Ukuran foto maksimal 10MB');
+      setError("Ukuran foto maksimal 10MB");
       return;
     }
 
     try {
       const compressed = await compressImage(file);
       setter(compressed);
-      setError('');
-    } catch (err) {
-      setError('Gagal memproses foto');
+      setError("");
+    } catch {
+      setError("Gagal memproses foto");
     }
   };
 
@@ -151,14 +193,14 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      setError('Format foto harus JPG, JPEG, PNG, atau WebP');
+      setError("Format foto harus JPG, JPEG, PNG, atau WebP");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Ukuran foto maksimal 10MB');
+      setError("Ukuran foto maksimal 10MB");
       return;
     }
 
@@ -167,9 +209,9 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
       const newPhotos = [...dressPhotos];
       newPhotos[index] = compressed;
       setDressPhotos(newPhotos);
-      setError('');
-    } catch (err) {
-      setError('Gagal memproses foto');
+      setError("");
+    } catch {
+      setError("Gagal memproses foto");
     }
   };
 
@@ -178,35 +220,44 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
   };
 
   const addItem = () => {
-    setItems([...items, {
-      id: Date.now().toString(),
-      name: '',
-      quantity: 1,
-      price: 0,
-      total: 0
-    }]);
+    setItems([
+      ...items,
+      {
+        id: Date.now().toString(),
+        name: "",
+        quantity: 1,
+        price: 0,
+        total: 0,
+      },
+    ]);
   };
 
   const removeItem = (id: string) => {
     if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
+      setItems(items.filter((item) => item.id !== id));
     }
   };
 
-  const updateItem = (id: string, field: keyof OrderItem, value: string | number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'price') {
-          updated.total = calculateItemTotal(
-            field === 'quantity' ? Number(value) : item.quantity,
-            field === 'price' ? Number(value) : item.price
-          );
+  const updateItem = (
+    id: string,
+    field: keyof OrderItem,
+    value: string | number
+  ) => {
+    setItems(
+      items.map((item) => {
+        if (item.id === id) {
+          const updated = { ...item, [field]: value };
+          if (field === "quantity" || field === "price") {
+            updated.total = calculateItemTotal(
+              field === "quantity" ? Number(value) : item.quantity,
+              field === "price" ? Number(value) : item.price
+            );
+          }
+          return updated;
         }
-        return updated;
-      }
-      return item;
-    }));
+        return item;
+      })
+    );
   };
 
   const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -214,33 +265,33 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     if (!selectedClient) {
-      setError('Please select a client');
+      setError("Please select a client");
       setLoading(false);
       return;
     }
 
-    if (items.some(item => !item.name || item.price <= 0)) {
-      setError('Please fill all item details');
+    if (items.some((item) => !item.name || item.price <= 0)) {
+      setError("Please fill all item details");
       setLoading(false);
       return;
     }
 
     try {
       const response = await fetch(`/api/orders/${order.id}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: selectedClient,
           eventLocation,
-          items: items.map(({ id, ...item }) => item),
+          items: items.map(({ id: _id, ...item }) => item),
           stageModelPhoto: stageModelPhoto || null,
           chairModel,
           tentColorPhoto: tentColorPhoto || null,
           softlensColor,
-          dressPhotos: dressPhotos.filter(p => p !== ''),
+          dressPhotos: dressPhotos.filter((p) => p !== ""),
           specialRequest,
           totalAmount: grandTotal,
           paymentStatus,
@@ -250,13 +301,13 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to update order');
+        throw new Error(data.message || "Failed to update order");
       }
 
-      router.push('/orders');
+      router.push("/orders");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -301,7 +352,7 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                 className="w-full h-12 mt-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-white focus:ring-2 focus:ring-[#d4b896]/50 focus:outline-none"
               >
                 <option value="">Pilih klien</option>
-                {clients.map(client => (
+                {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.brideName} & {client.groomName}
                   </option>
@@ -324,17 +375,29 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
 
         {/* Item & Layanan */}
         <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Item & Layanan yang Dipesan</h2>
-          
+          <h2 className="text-xl font-bold text-white mb-6">
+            Item & Layanan yang Dipesan
+          </h2>
+
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left text-sm font-medium text-gray-400 pb-3">Item</th>
-                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-24">Jml</th>
-                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-40">Harga</th>
-                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-40">Total</th>
-                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-20">Aksi</th>
+                  <th className="text-left text-sm font-medium text-gray-400 pb-3">
+                    Item
+                  </th>
+                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-24">
+                    Jml
+                  </th>
+                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-40">
+                    Harga
+                  </th>
+                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-40">
+                    Total
+                  </th>
+                  <th className="text-left text-sm font-medium text-gray-400 pb-3 w-20">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -344,7 +407,9 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                       <Input
                         type="text"
                         value={item.name}
-                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        onChange={(e) =>
+                          updateItem(item.id, "name", e.target.value)
+                        }
                         required
                         className="bg-[#1a1a1a]"
                       />
@@ -354,7 +419,13 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          updateItem(
+                            item.id,
+                            "quantity",
+                            parseInt(e.target.value)
+                          )
+                        }
                         required
                         className="bg-[#1a1a1a]"
                       />
@@ -364,14 +435,20 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                         type="number"
                         min="0"
                         value={item.price}
-                        onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          updateItem(
+                            item.id,
+                            "price",
+                            parseFloat(e.target.value)
+                          )
+                        }
                         required
                         className="bg-[#1a1a1a]"
                       />
                     </td>
                     <td className="py-3 px-2">
                       <div className="px-4 py-2 bg-[#1a1a1a] rounded-lg text-white">
-                        Rp{item.total.toLocaleString('id-ID')}
+                        Rp{item.total.toLocaleString("id-ID")}
                       </div>
                     </td>
                     <td className="py-3 px-2">
@@ -381,7 +458,9 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                         disabled={items.length === 1}
                         className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-30 transition-colors"
                       >
-                        <span className="material-symbols-outlined">delete</span>
+                        <span className="material-symbols-outlined">
+                          delete
+                        </span>
                       </button>
                     </td>
                   </tr>
@@ -403,7 +482,7 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-white">Total</span>
               <span className="text-2xl font-bold text-white">
-                Rp{grandTotal.toLocaleString('id-ID')}
+                Rp{grandTotal.toLocaleString("id-ID")}
               </span>
             </div>
           </div>
@@ -411,13 +490,17 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
 
         {/* Detail Dekorasi dengan Foto */}
         <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Detail Dekorasi Pernikahan</h2>
-          
+          <h2 className="text-xl font-bold text-white mb-6">
+            Detail Dekorasi Pernikahan
+          </h2>
+
           <div className="space-y-6">
             {/* Model Pelaminan Photo */}
             <div>
               <Label>Foto Model Pelaminan</Label>
-              <p className="text-xs text-gray-400 mt-1 mb-3">Upload foto model pelaminan (Max 10MB, JPG/PNG/WebP)</p>
+              <p className="text-xs text-gray-400 mt-1 mb-3">
+                Upload foto model pelaminan (Max 10MB, JPG/PNG/WebP)
+              </p>
               <div className="flex items-start gap-4">
                 <div className="flex-1">
                   <input
@@ -429,7 +512,12 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                 </div>
                 {stageModelPhoto && (
                   <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                    <img src={stageModelPhoto} alt="Preview" className="w-full h-full object-cover" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={stageModelPhoto}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
               </div>
@@ -449,7 +537,9 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
             {/* Tent Color Photo */}
             <div>
               <Label>Foto Warna Kain Tenda</Label>
-              <p className="text-xs text-gray-400 mt-1 mb-3">Upload foto warna kain tenda (Max 10MB, JPG/PNG/WebP)</p>
+              <p className="text-xs text-gray-400 mt-1 mb-3">
+                Upload foto warna kain tenda (Max 10MB, JPG/PNG/WebP)
+              </p>
               <div className="flex items-start gap-4">
                 <div className="flex-1">
                   <input
@@ -461,7 +551,12 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                 </div>
                 {tentColorPhoto && (
                   <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                    <img src={tentColorPhoto} alt="Preview" className="w-full h-full object-cover" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={tentColorPhoto}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
               </div>
@@ -481,11 +576,15 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
             {/* Dress Photos */}
             <div>
               <Label>Foto Gaun (3 Foto)</Label>
-              <p className="text-xs text-gray-400 mt-1 mb-3">Upload hingga 3 foto gaun (Max 10MB per foto, JPG/PNG/WebP)</p>
+              <p className="text-xs text-gray-400 mt-1 mb-3">
+                Upload hingga 3 foto gaun (Max 10MB per foto, JPG/PNG/WebP)
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[0, 1, 2].map((index) => (
                   <div key={index} className="space-y-2">
-                    <p className="text-xs text-gray-400">Foto Gaun {index + 1}</p>
+                    <p className="text-xs text-gray-400">
+                      Foto Gaun {index + 1}
+                    </p>
                     <input
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -494,7 +593,12 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
                     />
                     {dressPhotos[index] && (
                       <div className="w-full aspect-square rounded-lg overflow-hidden border-2 border-[#d4b896]">
-                        <img src={dressPhotos[index]} alt={`Gaun ${index + 1}`} className="w-full h-full object-cover" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={dressPhotos[index]}
+                          alt={`Gaun ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                   </div>
@@ -516,8 +620,10 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
 
         {/* Status Pembayaran */}
         <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Status Pembayaran</h2>
-          
+          <h2 className="text-xl font-bold text-white mb-6">
+            Status Pembayaran
+          </h2>
+
           <div>
             <Label>Status Pembayaran</Label>
             <select
@@ -544,7 +650,7 @@ export default function EditOrderForm({ order, clients }: { order: Order; client
             disabled={loading}
             className="w-full sm:w-auto bg-[#d4b896] hover:bg-[#c4a886] text-black px-8"
           >
-            {loading ? 'Menyimpan...' : 'Simpan Pesanan'}
+            {loading ? "Menyimpan..." : "Simpan Pesanan"}
           </Button>
         </div>
       </form>

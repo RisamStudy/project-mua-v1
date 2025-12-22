@@ -1,6 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
-import EditClientForm from './edit-client-form';
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import EditClientForm from "./edit-client-form";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: {
@@ -15,7 +18,7 @@ async function getClient(id: string) {
     });
     return client;
   } catch (error) {
-    console.error('Failed to fetch client:', error);
+    console.error("Failed to fetch client:", error);
     return null;
   }
 }

@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
-){
+) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
 
     // Check if order exists
@@ -14,10 +18,7 @@ export async function DELETE(
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
     // Delete order (akan otomatis delete payments dan invoices karena cascade)
@@ -27,20 +28,18 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Order deleted successfully',
+      message: "Order deleted successfully",
     });
-  } catch (error: any) {
-    console.error('Delete order error:', error);
-    
-    if (error.code === 'P2025') {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+  } catch (error: unknown) {
+    console.error("Delete order error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2025") {
+      return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json(
-      { message: error.message || 'Failed to delete order' },
+      { message: prismaError.message || "Failed to delete order" },
       { status: 500 }
     );
   }

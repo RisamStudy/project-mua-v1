@@ -1,16 +1,20 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Decimal } from '@prisma/client/runtime/library';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { Decimal } from "@prisma/client/runtime/library";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const body = await request.json();
     const { name, category, description, price, imageUrl } = body;
 
     // Validasi input
     if (!name || !category || price === undefined || price === null) {
       return NextResponse.json(
-        { message: 'Name, category, and price are required' },
+        { message: "Name, category, and price are required" },
         { status: 400 }
       );
     }
@@ -19,7 +23,7 @@ export async function POST(request: Request) {
     const priceNumber = parseFloat(price);
     if (isNaN(priceNumber) || priceNumber < 0) {
       return NextResponse.json(
-        { message: 'Price must be a valid positive number' },
+        { message: "Price must be a valid positive number" },
         { status: 400 }
       );
     }
@@ -38,34 +42,41 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Product created successfully',
+      message: "Product created successfully",
       data: {
         id: product.id,
         name: product.name,
         category: product.category,
       },
     });
-  } catch (error: any) {
-    console.error('Create product error:', error);
-    
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    console.error("Create product error:", error);
+
+    const prismaError = error as { code?: string; message?: string };
+    if (prismaError.code === "P2002") {
       return NextResponse.json(
-        { message: 'A product with this name already exists' },
+        { message: "A product with this name already exists" },
         { status: 400 }
       );
     }
 
-    if (error.message?.includes('Can\'t reach database')) {
+    if (prismaError.message?.includes("Can't reach database")) {
       return NextResponse.json(
-        { message: 'Database connection failed. Please ensure database is running.' },
+        {
+          message:
+            "Database connection failed. Please ensure database is running.",
+        },
         { status: 503 }
       );
     }
 
     return NextResponse.json(
-      { 
-        message: error.message || 'Failed to create product',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      {
+        message: prismaError.message || "Failed to create product",
+        details:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).stack
+            : undefined,
       },
       { status: 500 }
     );

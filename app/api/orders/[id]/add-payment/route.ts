@@ -1,18 +1,22 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuthAPI } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Authentication check
+    await requireAuthAPI();
+
     const { id } = await params;
     const body = await request.json();
     const { amount, paymentMethod, notes } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
-        { message: 'Payment amount is required and must be greater than 0' },
+        { message: "Payment amount is required and must be greater than 0" },
         { status: 400 }
       );
     }
@@ -22,17 +26,14 @@ export async function POST(
       where: { id },
       include: {
         payments: {
-          orderBy: { paymentNumber: 'desc' },
+          orderBy: { paymentNumber: "desc" },
           take: 1,
         },
       },
     });
 
     if (!order) {
-      return NextResponse.json(
-        { message: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
     // Check if payment exceeds remaining amount
@@ -42,7 +43,9 @@ export async function POST(
 
     if (amount > remaining) {
       return NextResponse.json(
-        { message: `Payment amount (${amount}) exceeds remaining amount (${remaining})` },
+        {
+          message: `Payment amount (${amount}) exceeds remaining amount (${remaining})`,
+        },
         { status: 400 }
       );
     }
@@ -54,7 +57,7 @@ export async function POST(
     // Calculate new totals
     const newPaidAmount = currentPaid + amount;
     const newRemainingAmount = total - newPaidAmount;
-    const newPaymentStatus = newRemainingAmount <= 0 ? 'Lunas' : 'Belum Lunas';
+    const newPaymentStatus = newRemainingAmount <= 0 ? "Lunas" : "Belum Lunas";
 
     // Create payment and update order in transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -64,8 +67,10 @@ export async function POST(
           orderId: id,
           paymentNumber: nextPaymentNumber,
           amount,
-          paymentMethod: paymentMethod || 'Transfer Bank',
-          notes: notes || `Pembayaran DP${nextPaymentNumber} untuk pesanan ${order.orderNumber}`,
+          paymentMethod: paymentMethod || "Transfer Bank",
+          notes:
+            notes ||
+            `Pembayaran DP${nextPaymentNumber} untuk pesanan ${order.orderNumber}`,
         },
       });
 
@@ -87,10 +92,13 @@ export async function POST(
       message: `Payment DP${nextPaymentNumber} added successfully`,
       data: result,
     });
-  } catch (error: any) {
-    console.error('Add payment error:', error);
+  } catch (error: unknown) {
+    console.error("Add payment error:", error);
     return NextResponse.json(
-      { message: error.message || 'Failed to add payment' },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to add payment",
+      },
       { status: 500 }
     );
   }
