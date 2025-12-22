@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // 4. Validate inputs
     const validClientId = validateId(clientId);
     const sanitizedEventLocation = sanitizeString(eventLocation, 500);
-    const validItems = validateArray(items, 50);
+    const validItems = validateArray<Prisma.InputJsonValue>(items, 50);
     const validTotalAmount = validatePrice(totalAmount);
     const validPaidAmount = paidAmount ? validatePrice(paidAmount) : 0;
 
