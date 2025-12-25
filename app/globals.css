@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Line clamp utility */
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
+
+/* Print styles yang tidak akan di-purge oleh Tailwind */
+@media print {
+  .print-safe-hidden {
+    display: none !important;
+  }
+  
+  .print-safe-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .print-safe-invoice {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    color: black !important;
+    padding: 20px !important;
+  }
+  
+  .print-safe-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  .print-safe-colors * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
