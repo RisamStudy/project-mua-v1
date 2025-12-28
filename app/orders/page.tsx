@@ -13,6 +13,8 @@ async function getOrders() {
           select: {
             brideName: true,
             groomName: true,
+            ceremonyDate: true,
+            receptionDate: true,
           },
         },
         payments: {
@@ -36,6 +38,16 @@ async function getOrders() {
         orderNumber: order.orderNumber,
         brideName: order.client.brideName,
         groomName: order.client.groomName,
+        ceremonyDate: order.client.ceremonyDate ? order.client.ceremonyDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }) : "-",
+        receptionDate: order.client.receptionDate ? order.client.receptionDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }) : "-",
         totalAmount: order.totalAmount.toString(),
         paidAmount: order.paidAmount.toString(),
         remainingAmount: order.remainingAmount.toString(),

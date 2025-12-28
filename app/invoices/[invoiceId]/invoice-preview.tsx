@@ -14,6 +14,7 @@ interface PaymentData {
   amount: string;
   paymentDate: string;
   paymentMethod: string;
+  notes?: string;
 }
 
 interface InvoiceData {
@@ -52,6 +53,8 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
   const [downloading, setDownloading] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dueDays, setDueDays] = useState(7); // Default 7 days
+  const [updating, setUpdating] = useState(false);
 
   // Detect Safari after component mounts to avoid hydration issues
   useEffect(() => {
@@ -60,6 +63,66 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
       setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
     }
   }, []);
+
+  // Initialize dueDays based on existing invoice due date
+  useEffect(() => {
+    if (invoice.dueDate) {
+      const issueDate = new Date(invoice.issueDate);
+      const dueDate = new Date(invoice.dueDate);
+      const diffTime = dueDate.getTime() - issueDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Set to closest predefined option
+      if (diffDays <= 1) setDueDays(1);
+      else if (diffDays <= 3) setDueDays(3);
+      else if (diffDays <= 7) setDueDays(7);
+      else setDueDays(30);
+    }
+  }, [invoice.dueDate, invoice.issueDate]);
+
+  // Calculate due date based on selected days
+  const calculateDueDate = (days: number) => {
+    const issueDate = new Date(invoice.issueDate);
+    const dueDate = new Date(issueDate);
+    dueDate.setDate(dueDate.getDate() + days);
+    return dueDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  };
+
+  const displayDueDate = invoice.dueDate || calculateDueDate(dueDays);
+
+  // Update due date when dropdown changes
+  const handleDueDaysChange = async (newDueDays: number) => {
+    setDueDays(newDueDays);
+    
+    // Only update if invoice already exists and has a due date
+    if (invoice.dueDate) {
+      setUpdating(true);
+      try {
+        const response = await fetch(`/api/invoices/${invoice.id}/update-due-date`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ dueDays: newDueDays }),
+        });
+
+        if (response.ok) {
+          // Refresh the page to show updated due date
+          window.location.reload();
+        } else {
+          console.error('Failed to update due date');
+        }
+      } catch (error) {
+        console.error('Error updating due date:', error);
+      } finally {
+        setUpdating(false);
+      }
+    }
+  };
 
   // Parse items - handle both array and stringified JSON
   const parseItems = (itemsData: unknown): OrderItem[] => {
@@ -272,10 +335,10 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                       <span style={{ color: '#666666' }}>Tanggal Terbit:</span>
                       <span className="font-semibold" style={{ color: '#000000' }}>{invoice.issueDate}</span>
                     </div>
-                    {invoice.dueDate && (
+                    {displayDueDate && (
                       <div className="flex justify-between text-xs">
                         <span style={{ color: '#666666' }}>Jatuh Tempo:</span>
-                        <span className="font-semibold" style={{ color: '#000000' }}>{invoice.dueDate}</span>
+                        <span className="font-semibold" style={{ color: '#000000' }}>{displayDueDate}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xs">
@@ -426,16 +489,47 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
             </div>
 
             {/* Footer Notes */}
-            {invoice.notes && (
+            {invoice.payment?.notes && (
               <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
                 <h3 className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#d4b896' }}>
                   Catatan / Keterangan
                 </h3>
                 <p className="text-xs md:text-sm" style={{ color: '#666666' }}>
-                  {invoice.notes}
+                  {invoice.payment.notes}
                 </p>
               </div>
             )}
+
+            {/* Bank Account Information */}
+            <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
+              <h3 className="text-xs font-bold mb-3 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                Informasi Pembayaran
+              </h3>
+              <div className="space-y-2">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs font-semibold mb-1" style={{ color: '#000000' }}>
+                    Bank BCA
+                  </p>
+                  <p className="text-xs" style={{ color: '#666666' }}>
+                    774 559 3402
+                  </p>
+                  <p className="text-xs" style={{ color: '#666666' }}>
+                    A/N FATIMATUZ ZAHRO
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs font-semibold mb-1" style={{ color: '#000000' }}>
+                    Bank BRI
+                  </p>
+                  <p className="text-xs" style={{ color: '#666666' }}>
+                    0601 01000 547 563
+                  </p>
+                  <p className="text-xs" style={{ color: '#666666' }}>
+                    A/N FATIMA TUZZAHRO
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -449,10 +543,13 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
             <div className="space-y-4">
               <div>
                 <label className="text-sm mb-2 block" style={{ color: '#666666' }}>
-                  Syarat Pembayaran
+                  Jatuh Tempo
                 </label>
                 <select 
-                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4b896]/50"
+                  value={dueDays}
+                  onChange={(e) => handleDueDaysChange(Number(e.target.value))}
+                  disabled={updating}
+                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4b896]/50 disabled:opacity-50"
                   style={{
                     backgroundColor: '#ffffff',
                     color: '#000000',
@@ -465,10 +562,16 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     backgroundSize: '16px'
                   }}
                 >
-                  <option>Net 7 hari</option>
-                  <option>Net 14 hari</option>
-                  <option>Net 30 hari</option>
+                  <option value="1">1 hari</option>
+                  <option value="3">3 hari</option>
+                  <option value="7">7 hari</option>
+                  <option value="30">1 bulan</option>
                 </select>
+                {updating && (
+                  <p className="text-xs mt-1" style={{ color: '#666666' }}>
+                    Mengupdate jatuh tempo...
+                  </p>
+                )}
               </div>
 
               <div>
@@ -519,6 +622,11 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     <p className="text-xs" style={{ color: '#666666' }}>
                       {payment.paymentDate} via {payment.paymentMethod}
                     </p>
+                    {payment.notes && (
+                      <p className="text-xs mt-1 italic" style={{ color: '#888888' }}>
+                        "{payment.notes}"
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -531,9 +639,39 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               Catatan / Keterangan
             </h2>
             <p className="text-sm" style={{ color: '#666666' }}>
-              Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami
-              sangat menghargai kepercayaan Anda.
+              {invoice.payment?.notes || "Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami sangat menghargai kepercayaan Anda."}
             </p>
+          </div>
+
+          {/* Bank Account Information */}
+          <div className="border-2 border-[#d4b896] rounded-xl p-6 shadow-lg" style={{ backgroundColor: '#ffffff' }}>
+            <h2 className="text-xl font-bold mb-6" style={{ color: '#000000' }}>
+              Informasi Rekening
+            </h2>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-sm font-semibold mb-2" style={{ color: '#000000' }}>
+                  Bank BCA
+                </h3>
+                <p className="text-sm font-mono" style={{ color: '#666666' }}>
+                  774 559 3402
+                </p>
+                <p className="text-xs" style={{ color: '#666666' }}>
+                  A/N FATIMATUZ ZAHRO
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-sm font-semibold mb-2" style={{ color: '#000000' }}>
+                  Bank BRI
+                </h3>
+                <p className="text-sm font-mono" style={{ color: '#666666' }}>
+                  0601 01000 547 563
+                </p>
+                <p className="text-xs" style={{ color: '#666666' }}>
+                  A/N FATIMA TUZZAHRO
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

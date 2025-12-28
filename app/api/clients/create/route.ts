@@ -32,9 +32,7 @@ export async function POST(request: Request) {
     if (
       !brideName ||
       !groomName ||
-      !primaryPhone ||
-      !ceremonyDate ||
-      !receptionDate
+      !primaryPhone
     ) {
       return NextResponse.json(
         { message: "Required fields are missing" },
@@ -44,25 +42,6 @@ export async function POST(request: Request) {
 
     // Create client and appointments in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create client
-      const client = await tx.client.create({
-        data: {
-          brideName,
-          groomName,
-          primaryPhone,
-          secondaryPhone,
-          brideAddress,
-          groomAddress,
-          brideParents,
-          groomParents,
-          ceremonyDate: new Date(ceremonyDate),
-          ceremonyTime,
-          receptionDate: new Date(receptionDate),
-          receptionTime,
-          eventLocation,
-        },
-      });
-
       // Helper function to create datetime
       const createDateTime = (dateStr: string, timeStr: string | null) => {
         const date = new Date(dateStr);
@@ -76,37 +55,61 @@ export async function POST(request: Request) {
         return date;
       };
 
-      // Create Akad Appointment
-      const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
-      const ceremonyEnd = new Date(ceremonyStart);
-      ceremonyEnd.setHours(ceremonyEnd.getHours() + 2); // Default 2 hours duration
-
-      await tx.appointment.create({
+      // Create client
+      const client = await tx.client.create({
         data: {
-          title: `Akad - ${brideName} & ${groomName}`,
-          description: `Akad Nikah di ${eventLocation}`,
-          startTime: ceremonyStart,
-          endTime: ceremonyEnd,
-          clientId: client.id,
-          color: "#9c27b0", // Purple for ceremony
+          brideName,
+          groomName,
+          primaryPhone,
+          secondaryPhone,
+          brideAddress,
+          groomAddress,
+          brideParents,
+          groomParents,
+          ceremonyDate: ceremonyDate ? new Date(ceremonyDate) : null,
+          ceremonyTime,
+          receptionDate: receptionDate ? new Date(receptionDate) : null,
+          receptionTime,
+          eventLocation,
         },
       });
 
-      // Create Resepsi Appointment
-      const receptionStart = createDateTime(receptionDate, receptionTime);
-      const receptionEnd = new Date(receptionStart);
-      receptionEnd.setHours(receptionEnd.getHours() + 3); // Default 3 hours duration
+      // Create appointments only if dates are provided
+      if (ceremonyDate) {
+        // Create Akad Appointment
+        const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
+        const ceremonyEnd = new Date(ceremonyStart);
+        ceremonyEnd.setHours(ceremonyEnd.getHours() + 2); // Default 2 hours duration
 
-      await tx.appointment.create({
-        data: {
-          title: `Resepsi - ${brideName} & ${groomName}`,
-          description: `Resepsi Pernikahan di ${eventLocation}`,
-          startTime: receptionStart,
-          endTime: receptionEnd,
-          clientId: client.id,
-          color: "#e91e63", // Pink for reception
-        },
-      });
+        await tx.appointment.create({
+          data: {
+            title: `Akad - ${brideName} & ${groomName}`,
+            description: `Akad Nikah di ${eventLocation}`,
+            startTime: ceremonyStart,
+            endTime: ceremonyEnd,
+            clientId: client.id,
+            color: "#9c27b0", // Purple for ceremony
+          },
+        });
+      }
+
+      if (receptionDate) {
+        // Create Resepsi Appointment
+        const receptionStart = createDateTime(receptionDate, receptionTime);
+        const receptionEnd = new Date(receptionStart);
+        receptionEnd.setHours(receptionEnd.getHours() + 3); // Default 3 hours duration
+
+        await tx.appointment.create({
+          data: {
+            title: `Resepsi - ${brideName} & ${groomName}`,
+            description: `Resepsi Pernikahan di ${eventLocation}`,
+            startTime: receptionStart,
+            endTime: receptionEnd,
+            clientId: client.id,
+            color: "#e91e63", // Pink for reception
+          },
+        });
+      }
 
       return client;
     });

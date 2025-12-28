@@ -46,15 +46,13 @@ async function getOrderDetails(id: string) {
         groomName: order.client.groomName,
         primaryPhone: order.client.primaryPhone,
         secondaryPhone: order.client.secondaryPhone,
-        ceremonyDate: format(
-          new Date(order.client.ceremonyDate),
-          "dd MMMM yyyy"
-        ),
+        ceremonyDate: order.client.ceremonyDate 
+          ? format(new Date(order.client.ceremonyDate), "dd MMMM yyyy")
+          : null,
         ceremonyTime: order.client.ceremonyTime,
-        receptionDate: format(
-          new Date(order.client.receptionDate),
-          "dd MMMM yyyy"
-        ),
+        receptionDate: order.client.receptionDate
+          ? format(new Date(order.client.receptionDate), "dd MMMM yyyy")
+          : null,
         receptionTime: order.client.receptionTime,
         eventLocation: order.client.eventLocation,
         brideAddress: order.client.brideAddress,

@@ -23,9 +23,9 @@ interface OrderDetails {
     groomName: string;
     primaryPhone: string;
     secondaryPhone: string | null;
-    ceremonyDate: string;
+    ceremonyDate: string | null;
     ceremonyTime: string | null;
-    receptionDate: string;
+    receptionDate: string | null;
     receptionTime: string | null;
     eventLocation: string;
     brideAddress: string;
@@ -99,6 +99,12 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
     try {
       const response = await fetch(`/api/orders/${order.id}/generate-invoice`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dueDays: 7, // Default 7 days
+        }),
       });
 
       const data = await response.json();
@@ -227,8 +233,9 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
             Tanggal Akad
           </p>
           <p className="text-sm sm:text-base text-black">
-            {order.client.ceremonyDate}
-            {order.client.ceremonyTime && ` - ${order.client.ceremonyTime}`} WIB
+            {order.client.ceremonyDate || "-"}
+            {order.client.ceremonyDate && order.client.ceremonyTime && ` - ${order.client.ceremonyTime}`}
+            {order.client.ceremonyDate && " WIB"}
           </p>
         </div>
 
@@ -237,10 +244,9 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
             Tanggal Resepsi
           </p>
           <p className="text-sm sm:text-base text-black">
-            {order.client.receptionDate}
-            {order.client.receptionTime &&
-              ` - ${order.client.receptionTime}`}{" "}
-            WIB
+            {order.client.receptionDate || "-"}
+            {order.client.receptionDate && order.client.receptionTime && ` - ${order.client.receptionTime}`}
+            {order.client.receptionDate && " WIB"}
           </p>
         </div>
 

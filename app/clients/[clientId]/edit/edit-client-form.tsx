@@ -17,9 +17,9 @@ interface Client {
   groomAddress: string;
   brideParents: string;
   groomParents: string;
-  ceremonyDate: Date;
+  ceremonyDate: Date | null;
   ceremonyTime: string | null;
-  receptionDate: Date;
+  receptionDate: Date | null;
   receptionTime: string | null;
   eventLocation: string;
 }
@@ -46,7 +46,8 @@ export default function EditClientForm({ client }: { client: Client }) {
   const [error, setError] = useState("");
 
   // Format dates untuk input type="date"
-  const formatDateForInput = (date: Date) => {
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return "";
     return new Date(date).toISOString().split("T")[0];
   };
 
@@ -198,13 +199,12 @@ export default function EditClientForm({ client }: { client: Client }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Ceremony Date */}
             <div>
-              <Label>Tanggal Akad</Label>
+              <Label>Tanggal Akad (Opsional)</Label>
               <Input
                 type="date"
                 name="ceremonyDate"
                 value={formData.ceremonyDate}
                 onChange={handleChange}
-                required
                 className="mt-2 bg-white border-[#d4b896] text-black"
               />
             </div>
@@ -223,13 +223,12 @@ export default function EditClientForm({ client }: { client: Client }) {
 
             {/* Reception Date */}
             <div>
-              <Label>Tanggal Resepsi</Label>
+              <Label>Tanggal Resepsi (Opsional)</Label>
               <Input
                 type="date"
                 name="receptionDate"
                 value={formData.receptionDate}
                 onChange={handleChange}
-                required
                 className="mt-2 bg-white border-[#d4b896] text-black"
               />
             </div>

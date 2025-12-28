@@ -15,7 +15,21 @@ export async function POST(
     await requireAuthAPI();
 
     const { id } = await params;
-    console.log(`Generating invoice for order: ${id}`);
+    
+    // Try to parse request body, default to empty object if no body
+    let body = {};
+    try {
+      const requestText = await request.text();
+      if (requestText) {
+        body = JSON.parse(requestText);
+      }
+    } catch (parseError) {
+      console.log("No request body or invalid JSON, using defaults");
+    }
+    
+    const { dueDays = 7 } = body; // Default to 7 days if not provided
+    
+    console.log(`Generating invoice for order: ${id} with due days: ${dueDays}`);
 
     // Get order with latest payment
     const order = await prisma.order.findUnique({
@@ -94,7 +108,7 @@ export async function POST(
           amount: latestPayment.amount,
           paidAmount: latestPayment.amount,
           status: "Paid",
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          dueDate: new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000), // dueDays from now
           notes: `Invoice untuk pembayaran DP${latestPayment.paymentNumber} - ${order.orderNumber}`,
         },
       });
@@ -108,9 +122,9 @@ export async function POST(
       });
     }
 
-    // Calculate due date (7 days from now)
+    // Calculate due date (dueDays from now)
     const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7);
+    dueDate.setDate(dueDate.getDate() + dueDays);
 
     // Create invoice
     const invoice = await prisma.invoice.create({

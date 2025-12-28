@@ -18,16 +18,16 @@ async function getClients() {
       groomName: client.groomName,
       primaryPhone: client.primaryPhone,
       secondaryPhone: client.secondaryPhone || "-",
-      ceremonyDate: client.ceremonyDate.toLocaleDateString("en-US", {
+      ceremonyDate: client.ceremonyDate ? client.ceremonyDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "2-digit",
-      }),
-      receptionDate: client.receptionDate.toLocaleDateString("en-US", {
+      }) : "-",
+      receptionDate: client.receptionDate ? client.receptionDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "2-digit",
-      }),
+      }) : "-",
     }));
   } catch (error) {
     console.error("Failed to fetch clients:", error);

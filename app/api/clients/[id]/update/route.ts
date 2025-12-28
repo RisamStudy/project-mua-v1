@@ -43,9 +43,7 @@ export async function PUT(
     if (
       !brideName ||
       !groomName ||
-      !primaryPhone ||
-      !ceremonyDate ||
-      !receptionDate
+      !primaryPhone
     ) {
       return NextResponse.json(
         { message: "Required fields are missing" },
@@ -77,9 +75,9 @@ export async function PUT(
             groomAddress: sanitizeString(groomAddress, 1000),
             brideParents: sanitizeString(brideParents, 255),
             groomParents: sanitizeString(groomParents, 255),
-            ceremonyDate: new Date(ceremonyDate),
+            ceremonyDate: ceremonyDate ? new Date(ceremonyDate) : null,
             ceremonyTime,
-            receptionDate: new Date(receptionDate),
+            receptionDate: receptionDate ? new Date(receptionDate) : null,
             receptionTime,
             eventLocation: sanitizedEventLocation,
           },
@@ -111,59 +109,73 @@ export async function PUT(
           apt.title.toLowerCase().includes("resepsi")
         );
 
-        // Update or create Akad Appointment
-        const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
-        const ceremonyEnd = new Date(ceremonyStart);
-        ceremonyEnd.setHours(ceremonyEnd.getHours() + 2);
+        // Update or create Akad Appointment only if ceremonyDate is provided
+        if (ceremonyDate) {
+          const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
+          const ceremonyEnd = new Date(ceremonyStart);
+          ceremonyEnd.setHours(ceremonyEnd.getHours() + 2);
 
-        if (akadAppointment) {
-          await tx.appointment.update({
+          if (akadAppointment) {
+            await tx.appointment.update({
+              where: { id: akadAppointment.id },
+              data: {
+                title: `Akad - ${sanitizedBrideName} & ${sanitizedGroomName}`,
+                description: `Akad Nikah di ${sanitizedEventLocation}`,
+                startTime: ceremonyStart,
+                endTime: ceremonyEnd,
+              },
+            });
+          } else {
+            await tx.appointment.create({
+              data: {
+                title: `Akad - ${sanitizedBrideName} & ${sanitizedGroomName}`,
+                description: `Akad Nikah di ${sanitizedEventLocation}`,
+                startTime: ceremonyStart,
+                endTime: ceremonyEnd,
+                clientId: client.id,
+                color: "#9c27b0",
+              },
+            });
+          }
+        } else if (akadAppointment) {
+          // Delete akad appointment if date is removed
+          await tx.appointment.delete({
             where: { id: akadAppointment.id },
-            data: {
-              title: `Akad - ${sanitizedBrideName} & ${sanitizedGroomName}`,
-              description: `Akad Nikah di ${sanitizedEventLocation}`,
-              startTime: ceremonyStart,
-              endTime: ceremonyEnd,
-            },
-          });
-        } else {
-          await tx.appointment.create({
-            data: {
-              title: `Akad - ${sanitizedBrideName} & ${sanitizedGroomName}`,
-              description: `Akad Nikah di ${sanitizedEventLocation}`,
-              startTime: ceremonyStart,
-              endTime: ceremonyEnd,
-              clientId: client.id,
-              color: "#9c27b0",
-            },
           });
         }
 
-        // Update or create Resepsi Appointment
-        const receptionStart = createDateTime(receptionDate, receptionTime);
-        const receptionEnd = new Date(receptionStart);
-        receptionEnd.setHours(receptionEnd.getHours() + 3);
+        // Update or create Resepsi Appointment only if receptionDate is provided
+        if (receptionDate) {
+          const receptionStart = createDateTime(receptionDate, receptionTime);
+          const receptionEnd = new Date(receptionStart);
+          receptionEnd.setHours(receptionEnd.getHours() + 3);
 
-        if (resepsiAppointment) {
-          await tx.appointment.update({
+          if (resepsiAppointment) {
+            await tx.appointment.update({
+              where: { id: resepsiAppointment.id },
+              data: {
+                title: `Resepsi - ${sanitizedBrideName} & ${sanitizedGroomName}`,
+                description: `Resepsi Pernikahan di ${sanitizedEventLocation}`,
+                startTime: receptionStart,
+                endTime: receptionEnd,
+              },
+            });
+          } else {
+            await tx.appointment.create({
+              data: {
+                title: `Resepsi - ${sanitizedBrideName} & ${sanitizedGroomName}`,
+                description: `Resepsi Pernikahan di ${sanitizedEventLocation}`,
+                startTime: receptionStart,
+                endTime: receptionEnd,
+                clientId: client.id,
+                color: "#e91e63",
+              },
+            });
+          }
+        } else if (resepsiAppointment) {
+          // Delete resepsi appointment if date is removed
+          await tx.appointment.delete({
             where: { id: resepsiAppointment.id },
-            data: {
-              title: `Resepsi - ${sanitizedBrideName} & ${sanitizedGroomName}`,
-              description: `Resepsi Pernikahan di ${sanitizedEventLocation}`,
-              startTime: receptionStart,
-              endTime: receptionEnd,
-            },
-          });
-        } else {
-          await tx.appointment.create({
-            data: {
-              title: `Resepsi - ${sanitizedBrideName} & ${sanitizedGroomName}`,
-              description: `Resepsi Pernikahan di ${sanitizedEventLocation}`,
-              startTime: receptionStart,
-              endTime: receptionEnd,
-              clientId: client.id,
-              color: "#e91e63",
-            },
           });
         }
 

@@ -64,6 +64,7 @@ async function getInvoiceDetails(id: string) {
             day: "2-digit",
           }),
           paymentMethod: p.paymentMethod,
+          notes: p.notes,
         })),
       },
       client: {
@@ -73,7 +74,7 @@ async function getInvoiceDetails(id: string) {
         brideAddress: invoice.order.client.brideAddress,
         eventLocation: invoice.order.client.eventLocation,
       },
-      payment: invoice.payment
+        payment: invoice.payment
         ? {
             id: invoice.payment.id,
             paymentNumber: invoice.payment.paymentNumber,
@@ -87,6 +88,7 @@ async function getInvoiceDetails(id: string) {
               }
             ),
             paymentMethod: invoice.payment.paymentMethod,
+            notes: invoice.payment.notes,
           }
         : null,
     };

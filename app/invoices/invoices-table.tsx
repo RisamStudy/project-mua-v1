@@ -17,7 +17,7 @@ interface Invoice {
 
 export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [monthFilter, setMonthFilter] = useState<'all' | 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december'>('all');
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
@@ -30,10 +30,23 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
       invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.orderNumber.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "All" || invoice.status === statusFilter;
+    if (!matchesSearch) return false;
 
-    return matchesSearch && matchesStatus;
+    // Month filtering based on issue date
+    if (monthFilter !== 'all') {
+      const issueDate = new Date(invoice.issueDate);
+      const monthIndex = issueDate.getMonth(); // 0-11
+      
+      const monthMap = {
+        'january': 0, 'february': 1, 'march': 2, 'april': 3,
+        'may': 4, 'june': 5, 'july': 6, 'august': 7,
+        'september': 8, 'october': 9, 'november': 10, 'december': 11
+      };
+      
+      return monthIndex === monthMap[monthFilter];
+    }
+
+    return true;
   });
 
   // Sort invoices by client name
@@ -88,9 +101,9 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border-2 border-[#d4b896] overflow-hidden shadow-lg">
+    <div className="bg-white rounded-xl border-2 border-[#d4b896] shadow-lg" style={{ overflow: 'visible' }}>
       {/* Search and Filters */}
-      <div className="p-4 sm:p-6 border-b border-[#d4b896]">
+      <div className="p-4 sm:p-6 border-b border-[#d4b896]" style={{ overflow: 'visible' }}>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
@@ -104,7 +117,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
               className="w-full bg-white border-2 border-[#d4b896] rounded-lg pl-12 pr-4 py-3 text-black placeholder:text-gray-500 focus:outline-none focus:border-[#c4a886]"
             />
           </div>
-          <div className="flex gap-2 relative overflow-visible">
+          <div className="flex gap-2 relative">
             {/* Filter Button */}
             <div className="relative">
               <button 
@@ -114,33 +127,42 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                 <span className="material-symbols-outlined text-lg sm:text-xl">filter_list</span>
                 <span className="hidden sm:inline whitespace-nowrap">Filter</span>
                 <span className="sm:hidden text-xs">Filter</span>
-                {statusFilter !== 'All' && (
+                {monthFilter !== 'all' && (
                   <span className="w-2 h-2 bg-[#d4b896] rounded-full flex-shrink-0"></span>
                 )}
               </button>
 
               {/* Filter Dropdown */}
               {showFilterMenu && (
-                <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-20 max-w-[calc(100vw-2rem)]">
+                <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto">
                   <div className="p-2">
                     <div className="text-xs font-medium text-gray-600 mb-2">
-                      Filter by Status
+                      Filter berdasarkan Bulan Terbit
                     </div>
                     {[
-                      { value: 'All', label: 'All Status' },
-                      { value: 'Paid', label: 'Paid' },
-                      { value: 'Pending', label: 'Pending' },
-                      { value: 'Overdue', label: 'Overdue' }
+                      { value: 'all', label: 'Semua Bulan' },
+                      { value: 'january', label: 'Januari' },
+                      { value: 'february', label: 'Februari' },
+                      { value: 'march', label: 'Maret' },
+                      { value: 'april', label: 'April' },
+                      { value: 'may', label: 'Mei' },
+                      { value: 'june', label: 'Juni' },
+                      { value: 'july', label: 'Juli' },
+                      { value: 'august', label: 'Agustus' },
+                      { value: 'september', label: 'September' },
+                      { value: 'october', label: 'Oktober' },
+                      { value: 'november', label: 'November' },
+                      { value: 'december', label: 'Desember' }
                     ].map((option) => (
                       <button
                         key={option.value}
                         onClick={() => {
-                          setStatusFilter(option.value);
+                          setMonthFilter(option.value as any);
                           setShowFilterMenu(false);
                           setCurrentPage(1); // Reset to first page
                         }}
                         className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors ${
-                          statusFilter === option.value ? 'text-[#d4b896] bg-[#d4b896]/10' : 'text-gray-700'
+                          monthFilter === option.value ? 'text-[#d4b896] bg-[#d4b896]/10' : 'text-gray-700'
                         }`}
                       >
                         {option.label}
@@ -167,7 +189,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
 
               {/* Sort Dropdown */}
               {showSortMenu && (
-                <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-20 max-w-[calc(100vw-2rem)]">
+                <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)]">
                   <div className="p-2">
                     <div className="text-xs font-medium text-gray-600 mb-2">
                       Sort by Client Name
@@ -212,7 +234,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" style={{ overflowY: 'visible' }}>
         <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-[#d4b896]">
@@ -243,7 +265,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                   colSpan={6}
                   className="px-6 py-12 text-center text-gray-500"
                 >
-                  {searchQuery || statusFilter !== "All"
+                  {searchQuery || monthFilter !== 'all'
                     ? "No invoices found matching your criteria."
                     : "No invoices yet."}
                 </td>
@@ -333,7 +355,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
             Menampilkan {startIndex + 1}-
             {Math.min(endIndex, sortedInvoices.length)} of{" "}
             {sortedInvoices.length} invoices
-            {(searchQuery || statusFilter !== 'All' || sortOrder) && (
+            {(searchQuery || monthFilter !== 'all' || sortOrder) && (
               <span className="ml-2 text-xs">
                 (filtered/sorted)
               </span>
@@ -367,7 +389,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
       {/* Click outside to close dropdowns */}
       {(showFilterMenu || showSortMenu) && (
         <div 
-          className="fixed inset-0 z-0" 
+          className="fixed inset-0 z-40" 
           onClick={() => {
             setShowFilterMenu(false);
             setSortMenu(false);

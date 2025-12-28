@@ -203,13 +203,12 @@ export default function AddClientForm() {
 
         {/* Ceremony Date */}
         <div>
-          <Label>Tanggal Akad</Label>
+          <Label>Tanggal Akad (Opsional)</Label>
           <Input
             type="date"
             name="ceremonyDate"
             value={formData.ceremonyDate}
             onChange={handleChange}
-            required
             className="mt-2 bg-white border-[#d4b896] text-black"
           />
         </div>
@@ -229,13 +228,12 @@ export default function AddClientForm() {
 
         {/* Reception Date */}
         <div>
-          <Label>Tanggal Resepsi</Label>
+          <Label>Tanggal Resepsi (Opsional)</Label>
           <Input
             type="date"
             name="receptionDate"
             value={formData.receptionDate}
             onChange={handleChange}
-            required
             className="mt-2 bg-white border-[#d4b896] text-black"
           />
         </div>

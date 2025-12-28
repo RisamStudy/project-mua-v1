@@ -10,6 +10,8 @@ interface Order {
   orderNumber: string;
   brideName: string;
   groomName: string;
+  ceremonyDate: string;
+  receptionDate: string;
   totalAmount: string;
   paidAmount: string;
   remainingAmount: string;
@@ -23,7 +25,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setSortMenu] = useState(false);
-  const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth' | 'nextMonth' | 'thisYear'>('all');
+  const [monthFilter, setMonthFilter] = useState<'all' | 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,18 +69,23 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
 
     if (!matchesSearch) return false;
 
-    // Payment status filtering
-    if (dateFilter !== 'all') {
-      switch (dateFilter) {
-        case 'thisMonth':
-          return order.paymentStatus === 'Lunas';
-        case 'nextMonth':
-          return order.paymentStatus === 'Belum Lunas';
-        case 'thisYear':
-          return parseFloat(order.remainingAmount) > 0;
-        default:
-          return true;
+    // Month filtering based on ceremony date
+    if (monthFilter !== 'all') {
+      // Skip filtering if no ceremony date
+      if (!order.ceremonyDate || order.ceremonyDate === "-") {
+        return false;
       }
+      
+      const ceremonyDate = new Date(order.ceremonyDate);
+      const monthIndex = ceremonyDate.getMonth(); // 0-11
+      
+      const monthMap = {
+        'january': 0, 'february': 1, 'march': 2, 'april': 3,
+        'may': 4, 'june': 5, 'july': 6, 'august': 7,
+        'september': 8, 'october': 9, 'november': 10, 'december': 11
+      };
+      
+      return monthIndex === monthMap[monthFilter];
     }
 
     return true;
@@ -149,9 +156,9 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
 
   return (
     <>
-      <div className="bg-white rounded-xl border-2 border-[#d4b896] overflow-hidden shadow-lg">
+      <div className="bg-white rounded-xl border-2 border-[#d4b896] shadow-lg" style={{ overflow: 'visible' }}>
         {/* Search */}
-        <div className="p-4 sm:p-6 border-b border-[#d4b896]">
+        <div className="p-4 sm:p-6 border-b border-[#d4b896]" style={{ overflow: 'visible' }}>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
@@ -165,7 +172,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                 className="w-full bg-white border-2 border-[#d4b896] rounded-lg pl-12 pr-4 py-3 text-black placeholder:text-gray-500 focus:outline-none focus:border-[#c4a886]"
               />
             </div>
-            <div className="flex gap-2 relative overflow-visible">
+            <div className="flex gap-2 relative">
               {/* Filter Button */}
               <div className="relative">
                 <button 
@@ -175,33 +182,42 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                   <span className="material-symbols-outlined text-lg sm:text-xl">filter_list</span>
                   <span className="hidden sm:inline whitespace-nowrap">Filter</span>
                   <span className="sm:hidden text-xs">Filter</span>
-                  {dateFilter !== 'all' && (
+                  {monthFilter !== 'all' && (
                     <span className="w-2 h-2 bg-[#d4b896] rounded-full flex-shrink-0"></span>
                   )}
                 </button>
 
                 {/* Filter Dropdown */}
                 {showFilterMenu && (
-                  <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-20 max-w-[calc(100vw-2rem)]">
+                  <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto">
                     <div className="p-2">
                       <div className="text-xs font-medium text-gray-600 mb-2">
-                        Filter by Status
+                        Filter berdasarkan Bulan Akad
                       </div>
                       {[
-                        { value: 'all', label: 'All Orders' },
-                        { value: 'thisMonth', label: 'Paid Orders' },
-                        { value: 'nextMonth', label: 'Unpaid Orders' },
-                        { value: 'thisYear', label: 'Has Remaining' }
+                        { value: 'all', label: 'Semua Bulan' },
+                        { value: 'january', label: 'Januari' },
+                        { value: 'february', label: 'Februari' },
+                        { value: 'march', label: 'Maret' },
+                        { value: 'april', label: 'April' },
+                        { value: 'may', label: 'Mei' },
+                        { value: 'june', label: 'Juni' },
+                        { value: 'july', label: 'Juli' },
+                        { value: 'august', label: 'Agustus' },
+                        { value: 'september', label: 'September' },
+                        { value: 'october', label: 'Oktober' },
+                        { value: 'november', label: 'November' },
+                        { value: 'december', label: 'Desember' }
                       ].map((option) => (
                         <button
                           key={option.value}
                           onClick={() => {
-                            setDateFilter(option.value as any);
+                            setMonthFilter(option.value as any);
                             setShowFilterMenu(false);
                             setCurrentPage(1); // Reset to first page
                           }}
                           className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors ${
-                            dateFilter === option.value ? 'text-[#d4b896] bg-[#d4b896]/10' : 'text-gray-700'
+                            monthFilter === option.value ? 'text-[#d4b896] bg-[#d4b896]/10' : 'text-gray-700'
                           }`}
                         >
                           {option.label}
@@ -228,7 +244,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
 
                 {/* Sort Dropdown */}
                 {showSortMenu && (
-                  <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-20 max-w-[calc(100vw-2rem)]">
+                  <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)]">
                     <div className="p-2">
                       <div className="text-xs font-medium text-gray-600 mb-2">
                         Sort by Bride Name
@@ -273,7 +289,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" style={{ overflowY: 'visible' }}>
           <table className="w-full min-w-[1000px]">
             <thead>
               <tr className="border-b border-[#d4b896]">
@@ -281,7 +297,10 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                   Mempelai Wanita
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
-                  Mempelai Pria
+                  Tanggal Akad
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
+                  Tanggal Resepsi
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
                   DP1
@@ -291,9 +310,6 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
                   Sisa Pembayaran
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
-                  Status Pembayaran
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-[#d4b896] uppercase">
                   Aksi
@@ -307,7 +323,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                     colSpan={7}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    {searchQuery || dateFilter !== 'all'
+                    {searchQuery || monthFilter !== 'all'
                       ? "Tidak ada pesanan yang sesuai dengan filter."
                       : "Belum ada pesanan. Buat pesanan pertama!"}
                   </td>
@@ -320,7 +336,10 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                   >
                     <td className="px-6 py-4 text-black font-medium">{order.brideName}</td>
                     <td className="px-6 py-4 text-gray-700">
-                      {order.groomName}
+                      {order.ceremonyDate}
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {order.receptionDate}
                     </td>
                     <td className="px-6 py-4 text-gray-700">
                       {formatCurrency(order.dp1)}
@@ -330,17 +349,6 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
                     </td>
                     <td className="px-6 py-4 text-gray-700">
                       {formatCurrency(order.remainingAmount)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          order.paymentStatus === "Lunas"
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                        }`}
-                      >
-                        {order.paymentStatus}
-                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -393,7 +401,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
               Menampilkan {startIndex + 1}-
               {Math.min(endIndex, filteredAndSortedOrders.length)} of{" "}
               {filteredAndSortedOrders.length} pesanan
-              {(searchQuery || dateFilter !== 'all' || sortOrder) && (
+              {(searchQuery || monthFilter !== 'all' || sortOrder) && (
                 <span className="ml-2 text-xs">
                   (filtered/sorted)
                 </span>
@@ -428,7 +436,7 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
       {/* Click outside to close dropdowns */}
       {(showFilterMenu || showSortMenu) && (
         <div 
-          className="fixed inset-0 z-0" 
+          className="fixed inset-0 z-40" 
           onClick={() => {
             setShowFilterMenu(false);
             setSortMenu(false);
