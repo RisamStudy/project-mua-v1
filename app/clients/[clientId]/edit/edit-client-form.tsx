@@ -19,8 +19,10 @@ interface Client {
   groomParents: string;
   ceremonyDate: Date | null;
   ceremonyTime: string | null;
+  ceremonyEndTime: string | null;
   receptionDate: Date | null;
   receptionTime: string | null;
+  receptionEndTime: string | null;
   eventLocation: string;
 }
 
@@ -35,8 +37,10 @@ interface FormData {
   groomParents: string;
   ceremonyDate: string;
   ceremonyTime: string;
+  ceremonyEndTime: string;
   receptionDate: string;
   receptionTime: string;
+  receptionEndTime: string;
   eventLocation: string;
 }
 
@@ -62,8 +66,10 @@ export default function EditClientForm({ client }: { client: Client }) {
     groomParents: client.groomParents,
     ceremonyDate: formatDateForInput(client.ceremonyDate),
     ceremonyTime: client.ceremonyTime || "",
+    ceremonyEndTime: client.ceremonyEndTime || "",
     receptionDate: formatDateForInput(client.receptionDate),
     receptionTime: client.receptionTime || "",
+    receptionEndTime: client.receptionEndTime || "",
     eventLocation: client.eventLocation,
   });
 
@@ -221,6 +227,18 @@ export default function EditClientForm({ client }: { client: Client }) {
               />
             </div>
 
+            {/* Ceremony End Time */}
+            <div>
+              <Label>Jam Kelar Akad</Label>
+              <Input
+                type="time"
+                name="ceremonyEndTime"
+                value={formData.ceremonyEndTime}
+                onChange={handleChange}
+                className="mt-2 bg-white border-[#d4b896] text-black"
+              />
+            </div>
+
             {/* Reception Date */}
             <div>
               <Label>Tanggal Resepsi (Opsional)</Label>
@@ -240,6 +258,18 @@ export default function EditClientForm({ client }: { client: Client }) {
                 type="time"
                 name="receptionTime"
                 value={formData.receptionTime}
+                onChange={handleChange}
+                className="mt-2 bg-white border-[#d4b896] text-black"
+              />
+            </div>
+
+            {/* Reception End Time */}
+            <div>
+              <Label>Jam Kelar Resepsi</Label>
+              <Input
+                type="time"
+                name="receptionEndTime"
+                value={formData.receptionEndTime}
                 onChange={handleChange}
                 className="mt-2 bg-white border-[#d4b896] text-black"
               />

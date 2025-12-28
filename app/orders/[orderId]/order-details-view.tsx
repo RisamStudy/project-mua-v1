@@ -25,8 +25,10 @@ interface OrderDetails {
     secondaryPhone: string | null;
     ceremonyDate: string | null;
     ceremonyTime: string | null;
+    ceremonyEndTime: string | null;
     receptionDate: string | null;
     receptionTime: string | null;
+    receptionEndTime: string | null;
     eventLocation: string;
     brideAddress: string;
     groomAddress: string;
@@ -235,6 +237,7 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
           <p className="text-sm sm:text-base text-black">
             {order.client.ceremonyDate || "-"}
             {order.client.ceremonyDate && order.client.ceremonyTime && ` - ${order.client.ceremonyTime}`}
+            {order.client.ceremonyDate && order.client.ceremonyEndTime && ` s/d ${order.client.ceremonyEndTime}`}
             {order.client.ceremonyDate && " WIB"}
           </p>
         </div>
@@ -246,6 +249,7 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
           <p className="text-sm sm:text-base text-black">
             {order.client.receptionDate || "-"}
             {order.client.receptionDate && order.client.receptionTime && ` - ${order.client.receptionTime}`}
+            {order.client.receptionDate && order.client.receptionEndTime && ` s/d ${order.client.receptionEndTime}`}
             {order.client.receptionDate && " WIB"}
           </p>
         </div>

@@ -34,8 +34,10 @@ export async function PUT(
       groomParents,
       ceremonyDate,
       ceremonyTime,
+      ceremonyEndTime,
       receptionDate,
       receptionTime,
+      receptionEndTime,
       eventLocation,
     } = body;
 
@@ -77,8 +79,10 @@ export async function PUT(
             groomParents: sanitizeString(groomParents, 255),
             ceremonyDate: ceremonyDate ? new Date(ceremonyDate) : null,
             ceremonyTime,
+            ceremonyEndTime,
             receptionDate: receptionDate ? new Date(receptionDate) : null,
             receptionTime,
+            receptionEndTime,
             eventLocation: sanitizedEventLocation,
           },
         });
@@ -91,6 +95,22 @@ export async function PUT(
             date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
           } else {
             date.setHours(9, 0, 0, 0);
+          }
+          return date;
+        };
+
+        const createEndDateTime = (dateStr: string, timeStr: string | null, startTime: string | null) => {
+          const date = new Date(dateStr);
+          if (timeStr) {
+            const [hours, minutes] = timeStr.split(":");
+            date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          } else if (startTime) {
+            // Default: 2 hours after start time
+            const [startHours, startMinutes] = startTime.split(":");
+            date.setHours(parseInt(startHours) + 2, parseInt(startMinutes), 0, 0);
+          } else {
+            // Default end time
+            date.setHours(11, 0, 0, 0);
           }
           return date;
         };
@@ -112,8 +132,7 @@ export async function PUT(
         // Update or create Akad Appointment only if ceremonyDate is provided
         if (ceremonyDate) {
           const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
-          const ceremonyEnd = new Date(ceremonyStart);
-          ceremonyEnd.setHours(ceremonyEnd.getHours() + 2);
+          const ceremonyEnd = createEndDateTime(ceremonyDate, ceremonyEndTime, ceremonyTime);
 
           if (akadAppointment) {
             await tx.appointment.update({
@@ -147,8 +166,7 @@ export async function PUT(
         // Update or create Resepsi Appointment only if receptionDate is provided
         if (receptionDate) {
           const receptionStart = createDateTime(receptionDate, receptionTime);
-          const receptionEnd = new Date(receptionStart);
-          receptionEnd.setHours(receptionEnd.getHours() + 3);
+          const receptionEnd = createEndDateTime(receptionDate, receptionEndTime, receptionTime);
 
           if (resepsiAppointment) {
             await tx.appointment.update({

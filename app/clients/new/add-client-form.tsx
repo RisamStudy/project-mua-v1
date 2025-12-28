@@ -17,8 +17,10 @@ interface FormData {
   groomParents: string;
   ceremonyDate: string;
   ceremonyTime: string;
+  ceremonyEndTime: string;
   receptionDate: string;
   receptionTime: string;
+  receptionEndTime: string;
   eventLocation: string;
 }
 
@@ -37,8 +39,10 @@ export default function AddClientForm() {
     groomParents: "",
     ceremonyDate: "",
     ceremonyTime: "",
+    ceremonyEndTime: "",
     receptionDate: "",
     receptionTime: "",
+    receptionEndTime: "",
     eventLocation: "",
   });
 
@@ -226,6 +230,19 @@ export default function AddClientForm() {
           />
         </div>
 
+        {/* Ceremony End Time */}
+        <div>
+          <Label>Jam Kelar Akad</Label>
+          <Input
+            type="time"
+            name="ceremonyEndTime"
+            value={formData.ceremonyEndTime}
+            onChange={handleChange}
+            placeholder="e.g., 11:00"
+            className="mt-2 bg-white border-[#d4b896] text-black"
+          />
+        </div>
+
         {/* Reception Date */}
         <div>
           <Label>Tanggal Resepsi (Opsional)</Label>
@@ -247,6 +264,19 @@ export default function AddClientForm() {
             value={formData.receptionTime}
             onChange={handleChange}
             placeholder="e.g., 18:00"
+            className="mt-2 bg-white border-[#d4b896] text-black"
+          />
+        </div>
+
+        {/* Reception End Time */}
+        <div>
+          <Label>Jam Kelar Resepsi</Label>
+          <Input
+            type="time"
+            name="receptionEndTime"
+            value={formData.receptionEndTime}
+            onChange={handleChange}
+            placeholder="e.g., 22:00"
             className="mt-2 bg-white border-[#d4b896] text-black"
           />
         </div>

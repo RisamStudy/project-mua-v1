@@ -23,8 +23,10 @@ export async function POST(request: Request) {
       groomParents,
       ceremonyDate,
       ceremonyTime,
+      ceremonyEndTime,
       receptionDate,
       receptionTime,
+      receptionEndTime,
       eventLocation,
     } = body;
 
@@ -55,6 +57,22 @@ export async function POST(request: Request) {
         return date;
       };
 
+      const createEndDateTime = (dateStr: string, timeStr: string | null, startTime: string | null) => {
+        const date = new Date(dateStr);
+        if (timeStr) {
+          const [hours, minutes] = timeStr.split(":");
+          date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        } else if (startTime) {
+          // Default: 2 hours after start time
+          const [startHours, startMinutes] = startTime.split(":");
+          date.setHours(parseInt(startHours) + 2, parseInt(startMinutes), 0, 0);
+        } else {
+          // Default end time
+          date.setHours(11, 0, 0, 0);
+        }
+        return date;
+      };
+
       // Create client
       const client = await tx.client.create({
         data: {
@@ -68,8 +86,10 @@ export async function POST(request: Request) {
           groomParents,
           ceremonyDate: ceremonyDate ? new Date(ceremonyDate) : null,
           ceremonyTime,
+          ceremonyEndTime,
           receptionDate: receptionDate ? new Date(receptionDate) : null,
           receptionTime,
+          receptionEndTime,
           eventLocation,
         },
       });
@@ -78,8 +98,7 @@ export async function POST(request: Request) {
       if (ceremonyDate) {
         // Create Akad Appointment
         const ceremonyStart = createDateTime(ceremonyDate, ceremonyTime);
-        const ceremonyEnd = new Date(ceremonyStart);
-        ceremonyEnd.setHours(ceremonyEnd.getHours() + 2); // Default 2 hours duration
+        const ceremonyEnd = createEndDateTime(ceremonyDate, ceremonyEndTime, ceremonyTime);
 
         await tx.appointment.create({
           data: {
@@ -96,8 +115,7 @@ export async function POST(request: Request) {
       if (receptionDate) {
         // Create Resepsi Appointment
         const receptionStart = createDateTime(receptionDate, receptionTime);
-        const receptionEnd = new Date(receptionStart);
-        receptionEnd.setHours(receptionEnd.getHours() + 3); // Default 3 hours duration
+        const receptionEnd = createEndDateTime(receptionDate, receptionEndTime, receptionTime);
 
         await tx.appointment.create({
           data: {
