@@ -174,7 +174,7 @@ export default function EditClientForm({ client }: { client: Client }) {
 
             {/* Primary Phone */}
             <div>
-              <Label>Nomor Telephone Wanita</Label>
+              <Label>Nomor HP Pengantin Wanita</Label>
               <Input
                 type="tel"
                 name="primaryPhone"
@@ -187,7 +187,7 @@ export default function EditClientForm({ client }: { client: Client }) {
 
             {/* Secondary Phone */}
             <div>
-              <Label>Nomor Telephone Pria</Label>
+              <Label>Nomor HP Pengantin Pria</Label>
               <Input
                 type="tel"
                 name="secondaryPhone"

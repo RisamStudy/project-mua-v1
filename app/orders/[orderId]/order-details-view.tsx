@@ -7,6 +7,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast";
 import PaymentModal from "@/components/orders/payment-modal";
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
 interface OrderItem {
   name: string;
@@ -60,6 +62,8 @@ interface OrderDetails {
 export default function OrderDetailsView({ order }: { order: OrderDetails }) {
   const router = useRouter();
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadingImage, setDownloadingImage] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [toast, setToast] = useState<{
@@ -136,6 +140,76 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}/download-pdf`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Order-${order.orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setToast({
+        isOpen: true,
+        message: "PDF berhasil didownload!",
+        type: "success",
+      });
+    } catch (err: unknown) {
+      setToast({
+        isOpen: true,
+        message: err instanceof Error ? err.message : "Gagal mendownload PDF",
+        type: "error",
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    setDownloadingImage(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}/download-image`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate image");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Order-${order.orderNumber}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setToast({
+        isOpen: true,
+        message: "Gambar berhasil didownload!",
+        type: "success",
+      });
+    } catch (err: unknown) {
+      setToast({
+        isOpen: true,
+        message: err instanceof Error ? err.message : "Gagal mendownload gambar",
+        type: "error",
+      });
+    } finally {
+      setDownloadingImage(false);
+    }
+  };
+
   const handlePaymentSuccess = () => {
     setIsPaymentModalOpen(false);
     setToast({
@@ -163,17 +237,25 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
           <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
             Kontak Person
           </p>
-          <p className="text-sm sm:text-base text-black font-semibold">
+          <p className="text-sm sm:text-base text-black font-semibold mb-3">
             {order.client.brideName}
           </p>
-          <p className="text-xs sm:text-sm text-gray-700">
-            {order.client.primaryPhone}
-          </p>
-          {order.client.secondaryPhone && (
-            <p className="text-xs sm:text-sm text-gray-700">
-              {order.client.secondaryPhone}
-            </p>
-          )}
+          
+          <div className="space-y-3">
+            {/* Nomor HP Pengantin Wanita (Primary Phone) */}
+            <WhatsAppLink
+              phoneNumber={order.client.primaryPhone}
+              label="HP Pengantin Wanita"
+            />
+            
+            {/* Nomor HP Pengantin Pria (Secondary Phone) */}
+            {order.client.secondaryPhone && (
+              <WhatsAppLink
+                phoneNumber={order.client.secondaryPhone}
+                label="HP Pengantin Pria"
+              />
+            )}
+          </div>
         </div>
 
         <div>
@@ -556,6 +638,68 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
                 </span>
                 <span>Ubah Pesanan</span>
               </Link>
+              
+              <DropdownMenu
+                align="left"
+                trigger={
+                  <Button className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3">
+                    <span className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg sm:text-xl">
+                        download
+                      </span>
+                      <span>Download</span>
+                      <span className="material-symbols-outlined text-lg sm:text-xl">
+                        expand_more
+                      </span>
+                    </span>
+                  </Button>
+                }
+              >
+                <DropdownMenuItem
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                  className={downloadingPdf ? "opacity-50" : ""}
+                >
+                  {downloadingPdf ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-lg">
+                        refresh
+                      </span>
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg text-red-600">
+                        picture_as_pdf
+                      </span>
+                      <span>Download sebagai PDF</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem
+                  onClick={handleDownloadImage}
+                  disabled={downloadingImage}
+                  className={downloadingImage ? "opacity-50" : ""}
+                >
+                  {downloadingImage ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-lg">
+                        refresh
+                      </span>
+                      <span>Generating Image...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg text-blue-600">
+                        image
+                      </span>
+                      <span>Download sebagai Gambar</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenu>
+              
               <Button
                 onClick={handleGenerateInvoice}
                 disabled={generatingInvoice}

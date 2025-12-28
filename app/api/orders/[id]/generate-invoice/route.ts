@@ -27,7 +27,7 @@ export async function POST(
       console.log("No request body or invalid JSON, using defaults");
     }
     
-    const { dueDays = 7 } = body; // Default to 7 days if not provided
+    const { dueDays = 7 } = body as { dueDays?: number }; // Default to 7 days if not provided
     
     console.log(`Generating invoice for order: ${id} with due days: ${dueDays}`);
 

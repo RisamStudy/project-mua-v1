@@ -124,11 +124,11 @@ export default function AddClientForm() {
 
         {/* Primary Phone */}
         <div>
-          <Label>Nomor Telephone Wanita</Label>
+          <Label>Nomor HP Pengantin Wanita</Label>
           <Input
             type="tel"
             name="primaryPhone"
-            placeholder="e.g., (123) 456-7890"
+            placeholder="e.g., 081234567890"
             value={formData.primaryPhone}
             onChange={handleChange}
             required
@@ -138,11 +138,11 @@ export default function AddClientForm() {
 
         {/* Secondary Phone */}
         <div>
-          <Label>Nomor Telephone Pria</Label>
+          <Label>Nomor HP Pengantin Pria</Label>
           <Input
             type="tel"
             name="secondaryPhone"
-            placeholder="e.g., (098) 765-4321"
+            placeholder="e.g., 081234567890"
             value={formData.secondaryPhone}
             onChange={handleChange}
             className="mt-2 bg-white border-[#d4b896] text-black"

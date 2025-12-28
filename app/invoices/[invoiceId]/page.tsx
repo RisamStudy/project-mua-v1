@@ -64,7 +64,7 @@ async function getInvoiceDetails(id: string) {
             day: "2-digit",
           }),
           paymentMethod: p.paymentMethod,
-          notes: p.notes,
+          notes: p.notes || undefined,
         })),
       },
       client: {
@@ -88,7 +88,7 @@ async function getInvoiceDetails(id: string) {
               }
             ),
             paymentMethod: invoice.payment.paymentMethod,
-            notes: invoice.payment.notes,
+            notes: invoice.payment.notes || undefined,
           }
         : null,
     };

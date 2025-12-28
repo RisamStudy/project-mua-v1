@@ -31,8 +31,6 @@ model Client {
   secondaryPhone    String?       @map("secondary_phone") @db.VarChar(50)
   brideAddress      String        @map("bride_address") @db.Text
   groomAddress      String        @map("groom_address") @db.Text
-  brideParents      String        @map("bride_parents") @db.VarChar(255)
-  groomParents      String        @map("groom_parents") @db.VarChar(255)
   ceremonyDate      DateTime?     @map("ceremony_date") @db.Date
   ceremonyTime      String?       @map("ceremony_time") @db.VarChar(10)
   ceremonyEndTime   String?       @map("ceremony_end_time") @db.VarChar(10)
