@@ -34,8 +34,8 @@ interface OrderDetails {
     eventLocation: string;
     brideAddress: string;
     groomAddress: string;
-    brideParents: string;
-    groomParents: string;
+    brideParents: string | null;
+    groomParents: string | null;
   };
   eventLocation: string;
   items: OrderItem[] | string | null;

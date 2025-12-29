@@ -8,7 +8,6 @@ const menuItems = [
   { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
   { name: 'Clients', path: '/clients', icon: 'groups' },
   { name: 'Orders', path: '/orders', icon: 'shopping_bag' },
-  { name: 'Products', path: '/products', icon: 'inventory_2' },
   { name: 'Invoice', path: '/invoices', icon: 'receipt_long' },
   { name: 'Calendar', path: '/calendar', icon: 'calendar_month' },
 ];

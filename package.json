@@ -10,7 +10,10 @@
     "lint": "eslint --max-warnings 0",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate deploy",
-    "create:account": "npx tsx ./scripts/create-admin.ts"
+    "create:account": "npx tsx ./scripts/create-admin.ts",
+    "build:cpanel": "node scripts/build-for-cpanel.js",
+    "package:deployment": "node scripts/create-deployment-package.js",
+    "deploy:lean": "node scripts/create-deployment-package.js"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
@@ -32,8 +35,8 @@
     "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.23",
     "cross-env": "^10.1.0",
     "eslint": "^9",

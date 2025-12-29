@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 const menu = [
   { label: "Clients", icon: "group", href: "/clients" },
   { label: "Orders", icon: "shopping_bag", href: "/orders" },
-  { label: "Products", icon: "inventory_2", href: "/products" },
   { label: "Invoice", icon: "receipt_long", href: "/invoice" },
 ];
 

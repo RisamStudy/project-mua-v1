@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
-// Paksa dynamic rendering
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 interface PaymentData {
   id: string;
@@ -14,7 +10,6 @@ interface PaymentData {
   amount: string;
   paymentDate: string;
   paymentMethod: string;
-  notes?: string;
 }
 
 interface InvoiceData {
@@ -51,78 +46,6 @@ interface OrderItem {
 
 export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
   const [downloading, setDownloading] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [dueDays, setDueDays] = useState(7); // Default 7 days
-  const [updating, setUpdating] = useState(false);
-
-  // Detect Safari after component mounts to avoid hydration issues
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
-      setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
-    }
-  }, []);
-
-  // Initialize dueDays based on existing invoice due date
-  useEffect(() => {
-    if (invoice.dueDate) {
-      const issueDate = new Date(invoice.issueDate);
-      const dueDate = new Date(invoice.dueDate);
-      const diffTime = dueDate.getTime() - issueDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      // Set to closest predefined option
-      if (diffDays <= 1) setDueDays(1);
-      else if (diffDays <= 3) setDueDays(3);
-      else if (diffDays <= 7) setDueDays(7);
-      else setDueDays(30);
-    }
-  }, [invoice.dueDate, invoice.issueDate]);
-
-  // Calculate due date based on selected days
-  const calculateDueDate = (days: number) => {
-    const issueDate = new Date(invoice.issueDate);
-    const dueDate = new Date(issueDate);
-    dueDate.setDate(dueDate.getDate() + days);
-    return dueDate.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-    });
-  };
-
-  const displayDueDate = invoice.dueDate || calculateDueDate(dueDays);
-
-  // Update due date when dropdown changes
-  const handleDueDaysChange = async (newDueDays: number) => {
-    setDueDays(newDueDays);
-    
-    // Only update if invoice already exists and has a due date
-    if (invoice.dueDate) {
-      setUpdating(true);
-      try {
-        const response = await fetch(`/api/invoices/${invoice.id}/update-due-date`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ dueDays: newDueDays }),
-        });
-
-        if (response.ok) {
-          // Refresh the page to show updated due date
-          window.location.reload();
-        } else {
-          console.error('Failed to update due date');
-        }
-      } catch (error) {
-        console.error('Error updating due date:', error);
-      } finally {
-        setUpdating(false);
-      }
-    }
-  };
 
   // Parse items - handle both array and stringified JSON
   const parseItems = (itemsData: unknown): OrderItem[] => {
@@ -148,32 +71,14 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
+      // Safari-specific print handling
       if (typeof window !== 'undefined') {
-        // Generate filename based on groom and bride names
-        const groomName = invoice.client.groomName || 'Groom';
-        const brideName = invoice.client.brideName || 'Bride';
-        const invoiceNumber = invoice.invoiceNumber || 'INV';
-        
-        // Clean names for filename (remove special characters)
-        const cleanGroomName = groomName.replace(/[^a-zA-Z0-9]/g, '');
-        const cleanBrideName = brideName.replace(/[^a-zA-Z0-9]/g, '');
-        const filename = `Invoice_${cleanGroomName}_${cleanBrideName}_${invoiceNumber}`;
-        
-        // Set document title for filename suggestion
-        const originalTitle = document.title;
-        document.title = filename;
-        
-        // Print langsung tanpa CSS tambahan apapun
+        // Hide any potential overlays or menus
+        document.body.style.overflow = 'visible';
         window.print();
-        
-        // Restore title
-        setTimeout(() => {
-          document.title = originalTitle;
-        }, 1000);
       }
     } catch (error) {
       console.error("Download error:", error);
-      alert("Terjadi kesalahan saat mencetak. Silakan coba lagi atau gunakan browser lain.");
     } finally {
       setDownloading(false);
     }
@@ -189,8 +94,17 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
   const sisaPembayaran = subtotal - totalDP;
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.style.display = "none";
+  };
+
   return (
-    <div className="max-w-5xl mx-auto relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+    <div className="max-w-5xl mx-auto relative bg-white min-h-screen" style={{
+      WebkitTransform: 'translateZ(0)',
+      transform: 'translateZ(0)',
+      WebkitBackfaceVisibility: 'hidden',
+      backfaceVisibility: 'hidden'
+    }}>
       {/* Header */}
       <div className="mb-6 md:mb-8 print:hidden bg-white p-6 border-b border-[#d4b896]">
         <Link
@@ -203,7 +117,7 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: '#000000' }}>
+            <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">
               Pratinjau & Generator Faktur
             </h1>
             <p className="text-sm md:text-base text-gray-600">
@@ -214,8 +128,7 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
           <Button
             onClick={handleDownloadPDF}
             disabled={downloading}
-            className="bg-[#d4b896] hover:bg-[#c4a886] flex-shrink-0 border border-[#d4b896]"
-            style={{ color: '#000000' }}
+            className="bg-[#d4b896] hover:bg-[#c4a886] text-black flex-shrink-0 border border-[#d4b896]"
           >
             {downloading ? (
               <span className="flex items-center gap-2">
@@ -228,21 +141,24 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               <span className="flex items-center gap-2">
                 <span className="material-symbols-outlined">download</span>
                 <span>Generate & Download PDF</span>
-                {mounted && isSafari && (
-                  <span className="text-xs opacity-75">(Safari)</span>
-                )}
               </span>
             )}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 p-6">
         {/* Invoice Document */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 relative">
           <div 
-            className="rounded-xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-lg border-2 border-[#d4b896] print:shadow-none print:border-none print:rounded-none"
-            style={{ backgroundColor: '#ffffff' }}
+            className="bg-white text-black rounded-xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-lg border-2 border-[#d4b896] print:shadow-none relative z-20"
+            style={{
+              position: 'relative',
+              zIndex: 999,
+              isolation: 'isolate',
+              WebkitTransform: 'translate3d(0, 0, 0)',
+              transform: 'translate3d(0, 0, 0)'
+            }}
           >
             {/* Invoice Header - Responsive Stack on Mobile */}
             <div className="mb-6 md:mb-10">
@@ -256,23 +172,25 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                       src="/logo.png"
                       alt="RORO MUA Logo"
                       className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
+                      onError={handleImageError}
                     />
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold mb-0.5" style={{ color: '#000000' }}>FAKTUR</h1>
-                    <p className="text-xs" style={{ color: '#666666' }}>#{invoice.invoiceNumber}</p>
+                    <h1 className="text-lg font-bold mb-0.5">FAKTUR</h1>
+                    <p className="text-xs text-gray-600">
+                      #{invoice.invoiceNumber}
+                    </p>
                   </div>
                 </div>
 
                 {/* Company Info */}
                 <div className="border-t pt-3">
-                  <h2 className="text-sm font-bold mb-1" style={{ color: '#000000' }}>RORO MUA</h2>
-                  <p className="text-xs leading-relaxed" style={{ color: '#666666' }}>
-                    Perumahan Kaliwulu blok AC no.1<br />
-                    Kec.Plered Kab Cirebon<br />
+                  <h2 className="text-sm font-bold mb-1">RORO MUA</h2>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Perumahan Kaliwulu blok AC no.1
+                    <br />
+                    Kec.Plered Kab Cirebon
+                    <br />
                     (Depan Lapangan)
                   </p>
                 </div>
@@ -287,26 +205,30 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                       src="/logo.png"
                       alt="RORO MUA Logo"
                       className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
+                      onError={handleImageError}
                     />
                   </div>
                   <div>
-                    <h1 className="text-xl md:text-2xl font-bold mb-1" style={{ color: '#000000' }}>FAKTUR</h1>
-                    <p className="text-xs md:text-sm" style={{ color: '#666666' }}>#{invoice.invoiceNumber}</p>
+                    <h1 className="text-xl md:text-2xl font-bold mb-1">
+                      FAKTUR
+                    </h1>
+                    <p className="text-xs md:text-sm text-gray-600">
+                      #{invoice.invoiceNumber}
+                    </p>
                   </div>
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <h2 className="text-sm md:text-base font-bold mb-1" style={{ color: '#000000' }}>RORO MUA</h2>
-                  <p className="text-xs leading-tight" style={{ color: '#666666' }}>
+                  <h2 className="text-sm md:text-base font-bold mb-1">
+                    RORO MUA
+                  </h2>
+                  <p className="text-xs text-gray-600 leading-tight">
                     Perumahan Kaliwulu blok AC no.1
                   </p>
-                  <p className="text-xs leading-tight" style={{ color: '#666666' }}>
+                  <p className="text-xs text-gray-600 leading-tight">
                     Kec.Plered Kab Cirebon
                   </p>
-                  <p className="text-xs leading-tight" style={{ color: '#666666' }}>
+                  <p className="text-xs text-gray-600 leading-tight">
                     (Depan Lapangan)
                   </p>
                 </div>
@@ -318,32 +240,40 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               {/* Mobile: Stacked */}
               <div className="space-y-4 sm:hidden">
                 <div>
-                  <h3 className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                  <h3 className="text-xs font-bold mb-2 text-[#d4b896] uppercase tracking-wide">
                     Diterbitkan Kepada
                   </h3>
-                  <p className="font-bold text-sm mb-1" style={{ color: '#000000' }}>{invoice.client.brideName}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: '#666666' }}>{invoice.client.brideAddress}</p>
-                  <p className="text-xs" style={{ color: '#666666' }}>{invoice.client.primaryPhone}</p>
+                  <p className="font-bold text-sm mb-1">
+                    {invoice.client.brideName}
+                  </p>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {invoice.client.brideAddress}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {invoice.client.primaryPhone}
+                  </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                  <h3 className="text-xs font-bold mb-2 text-[#d4b896] uppercase tracking-wide">
                     Detail Pembayaran
                   </h3>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span style={{ color: '#666666' }}>Tanggal Terbit:</span>
-                      <span className="font-semibold" style={{ color: '#000000' }}>{invoice.issueDate}</span>
+                      <span className="text-gray-600">Tanggal Terbit:</span>
+                      <span className="font-semibold">{invoice.issueDate}</span>
                     </div>
-                    {displayDueDate && (
+                    {invoice.dueDate && (
                       <div className="flex justify-between text-xs">
-                        <span style={{ color: '#666666' }}>Jatuh Tempo:</span>
-                        <span className="font-semibold" style={{ color: '#000000' }}>{displayDueDate}</span>
+                        <span className="text-gray-600">Jatuh Tempo:</span>
+                        <span className="font-semibold">{invoice.dueDate}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xs">
-                      <span style={{ color: '#666666' }}>ID Pesanan:</span>
-                      <span className="font-semibold" style={{ color: '#000000' }}>{invoice.order.orderNumber}</span>
+                      <span className="text-gray-600">ID Pesanan:</span>
+                      <span className="font-semibold">
+                        {invoice.order.orderNumber}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -352,32 +282,40 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               {/* Tablet & Desktop: Side by Side */}
               <div className="hidden sm:grid grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-xs font-bold mb-3 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                  <h3 className="text-xs font-bold mb-3 text-[#d4b896] uppercase tracking-wide">
                     Diterbitkan Kepada
                   </h3>
-                  <p className="font-bold text-sm md:text-base mb-1" style={{ color: '#000000' }}>{invoice.client.brideName}</p>
-                  <p className="text-xs md:text-sm" style={{ color: '#666666' }}>{invoice.client.brideAddress}</p>
-                  <p className="text-xs md:text-sm" style={{ color: '#666666' }}>{invoice.client.primaryPhone}</p>
+                  <p className="font-bold text-sm md:text-base mb-1">
+                    {invoice.client.brideName}
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {invoice.client.brideAddress}
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {invoice.client.primaryPhone}
+                  </p>
                 </div>
 
                 <div className="text-right">
-                  <h3 className="text-xs font-bold mb-3 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                  <h3 className="text-xs font-bold mb-3 text-[#d4b896] uppercase tracking-wide">
                     Detail Pembayaran
                   </h3>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs md:text-sm">
-                      <span style={{ color: '#666666' }}>Tanggal Terbit:</span>
-                      <span className="font-semibold" style={{ color: '#000000' }}>{invoice.issueDate}</span>
+                      <span className="text-gray-600">Tanggal Terbit:</span>
+                      <span className="font-semibold">{invoice.issueDate}</span>
                     </div>
                     {invoice.dueDate && (
                       <div className="flex justify-between text-xs md:text-sm">
-                        <span style={{ color: '#666666' }}>Jatuh Tempo:</span>
-                        <span className="font-semibold" style={{ color: '#000000' }}>{invoice.dueDate}</span>
+                        <span className="text-gray-600">Jatuh Tempo:</span>
+                        <span className="font-semibold">{invoice.dueDate}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xs md:text-sm">
-                      <span style={{ color: '#666666' }}>ID Pesanan:</span>
-                      <span className="font-semibold" style={{ color: '#000000' }}>{invoice.order.orderNumber}</span>
+                      <span className="text-gray-600">ID Pesanan:</span>
+                      <span className="font-semibold">
+                        {invoice.order.orderNumber}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -390,16 +328,16 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b-2 border-[#d4b896]">
-                      <th className="text-left py-2 md:py-3 font-semibold text-[10px] md:text-xs uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                      <th className="text-left py-2 md:py-3 font-semibold text-[10px] md:text-xs text-[#d4b896] uppercase tracking-wide">
                         Layanan
                       </th>
-                      <th className="text-center py-2 md:py-3 font-semibold text-[10px] md:text-xs uppercase tracking-wide w-12 md:w-16" style={{ color: '#d4b896' }}>
+                      <th className="text-center py-2 md:py-3 font-semibold text-[10px] md:text-xs text-[#d4b896] uppercase tracking-wide w-12 md:w-16">
                         QTY
                       </th>
-                      <th className="text-right py-2 md:py-3 font-semibold text-[10px] md:text-xs uppercase tracking-wide w-24 md:w-32" style={{ color: '#d4b896' }}>
+                      <th className="text-right py-2 md:py-3 font-semibold text-[10px] md:text-xs text-[#d4b896] uppercase tracking-wide w-24 md:w-32">
                         Harga
                       </th>
-                      <th className="text-right py-2 md:py-3 font-semibold text-[10px] md:text-xs uppercase tracking-wide w-24 md:w-32" style={{ color: '#d4b896' }}>
+                      <th className="text-right py-2 md:py-3 font-semibold text-[10px] md:text-xs text-[#d4b896] uppercase tracking-wide w-24 md:w-32">
                         Total
                       </th>
                     </tr>
@@ -407,16 +345,16 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                   <tbody>
                     {items.map((item: OrderItem, idx: number) => (
                       <tr key={idx} className="border-b border-[#d4b896]/30">
-                        <td className="py-3 md:py-4 text-xs md:text-sm pr-2 align-top" style={{ color: '#000000' }}>
+                        <td className="py-3 md:py-4 text-xs md:text-sm pr-2 align-top text-black">
                           {item.name}
                         </td>
-                        <td className="py-3 md:py-4 text-center text-xs md:text-sm align-top" style={{ color: '#000000' }}>
+                        <td className="py-3 md:py-4 text-center text-xs md:text-sm align-top text-black">
                           {item.quantity}
                         </td>
-                        <td className="py-3 md:py-4 text-right text-xs md:text-sm align-top" style={{ color: '#000000' }}>
+                        <td className="py-3 md:py-4 text-right text-xs md:text-sm align-top text-black">
                           {formatCurrency(item.price.toString())}
                         </td>
-                        <td className="py-3 md:py-4 text-right text-xs md:text-sm font-semibold align-top" style={{ color: '#000000' }}>
+                        <td className="py-3 md:py-4 text-right text-xs md:text-sm font-semibold align-top text-black">
                           {formatCurrency(item.total.toString())}
                         </td>
                       </tr>
@@ -431,8 +369,8 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               <div className="w-full sm:w-80 md:w-96 space-y-2">
                 {/* Subtotal */}
                 <div className="flex justify-between py-2 text-xs md:text-sm">
-                  <span style={{ color: '#666666' }}>Subtotal</span>
-                  <span className="font-semibold" style={{ color: '#000000' }}>
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-semibold text-black">
                     {formatCurrency(subtotal.toString())}
                   </span>
                 </div>
@@ -444,10 +382,10 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                       key={payment.id}
                       className="flex justify-between py-2 text-xs md:text-sm"
                     >
-                      <span style={{ color: '#666666' }}>
+                      <span className="text-gray-600">
                         DP{payment.paymentNumber}
                       </span>
-                      <span className="font-semibold" style={{ color: '#000000' }}>
+                      <span className="font-semibold text-black">
                         {formatCurrency(payment.amount)}
                       </span>
                     </div>
@@ -458,30 +396,30 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
                 {/* Jumlah Total */}
                 <div className="flex justify-between py-2">
-                  <span className="font-bold text-sm md:text-base" style={{ color: '#000000' }}>
+                  <span className="font-bold text-sm md:text-base text-black">
                     Jumlah Total
                   </span>
-                  <span className="font-bold text-sm md:text-base" style={{ color: '#000000' }}>
+                  <span className="font-bold text-sm md:text-base text-black">
                     {formatCurrency(subtotal.toString())}
                   </span>
                 </div>
 
                 {/* Total Dibayar */}
                 <div className="flex justify-between py-2 bg-green-50 px-3 rounded border border-green-200">
-                  <span className="font-semibold text-xs md:text-sm" style={{ color: '#15803d' }}>
+                  <span className="text-green-700 font-semibold text-xs md:text-sm">
                     Total Dibayar
                   </span>
-                  <span className="font-bold text-xs md:text-sm" style={{ color: '#15803d' }}>
+                  <span className="text-green-700 font-bold text-xs md:text-sm">
                     {formatCurrency(totalDP.toString())}
                   </span>
                 </div>
 
                 {/* Sisa Tagihan */}
-                <div className="flex justify-between py-2 md:py-3 px-3 rounded border border-[#d4b896]" style={{ backgroundColor: 'rgba(212, 184, 150, 0.1)' }}>
-                  <span className="font-bold text-sm md:text-base" style={{ color: '#d4b896' }}>
+                <div className="flex justify-between py-2 md:py-3 bg-[#d4b896]/10 px-3 rounded border border-[#d4b896]">
+                  <span className="font-bold text-sm md:text-base text-[#d4b896]">
                     Sisa Tagihan
                   </span>
-                  <span className="font-bold text-sm md:text-base" style={{ color: '#d4b896' }}>
+                  <span className="font-bold text-sm md:text-base text-[#d4b896]">
                     {formatCurrency(sisaPembayaran.toString())}
                   </span>
                 </div>
@@ -489,107 +427,55 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
             </div>
 
             {/* Footer Notes */}
-            {invoice.payment?.notes && (
+            {invoice.notes && (
               <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
-                <h3 className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#d4b896' }}>
+                <h3 className="text-xs font-bold mb-2 text-[#d4b896] uppercase tracking-wide">
                   Catatan / Keterangan
                 </h3>
-                <p className="text-xs md:text-sm" style={{ color: '#666666' }}>
-                  {invoice.payment.notes}
+                <p className="text-xs md:text-sm text-gray-600">
+                  {invoice.notes}
                 </p>
               </div>
             )}
-
-            {/* Bank Account Information */}
-            <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
-              <h3 className="text-xs font-bold mb-3 uppercase tracking-wide" style={{ color: '#d4b896' }}>
-                Informasi Pembayaran
-              </h3>
-              <div className="space-y-2">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-xs font-semibold mb-1" style={{ color: '#000000' }}>
-                    Bank BCA
-                  </p>
-                  <p className="text-xs" style={{ color: '#666666' }}>
-                    774 559 3402
-                  </p>
-                  <p className="text-xs" style={{ color: '#666666' }}>
-                    A/N FATIMATUZ ZAHRO
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-xs font-semibold mb-1" style={{ color: '#000000' }}>
-                    Bank BRI
-                  </p>
-                  <p className="text-xs" style={{ color: '#666666' }}>
-                    0601 01000 547 563
-                  </p>
-                  <p className="text-xs" style={{ color: '#666666' }}>
-                    A/N FATIMA TUZZAHRO
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Invoice Settings Sidebar */}
-        <div className="space-y-6 print:hidden">
-          <div className="border-2 border-[#d4b896] rounded-xl p-6 shadow-lg" style={{ backgroundColor: '#ffffff' }}>
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#000000' }}>
+        <div className="space-y-6 print:hidden relative z-10">
+          <div className="bg-white border-2 border-[#d4b896] rounded-xl p-6 shadow-lg">
+            <h2 className="text-xl font-bold text-black mb-6">
               Pengaturan Faktur
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm mb-2 block" style={{ color: '#666666' }}>
-                  Jatuh Tempo
+                <label className="text-sm text-gray-600 mb-2 block">
+                  Syarat Pembayaran
                 </label>
                 <select 
-                  value={dueDays}
-                  onChange={(e) => handleDueDaysChange(Number(e.target.value))}
-                  disabled={updating}
-                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4b896]/50 disabled:opacity-50"
+                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm"
                   style={{
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
                     WebkitAppearance: 'none',
                     MozAppearance: 'none',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d4b896\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 12px center',
-                    backgroundSize: '16px'
+                    appearance: 'none'
                   }}
                 >
-                  <option value="1">1 hari</option>
-                  <option value="3">3 hari</option>
-                  <option value="7">7 hari</option>
-                  <option value="30">1 bulan</option>
+                  <option>Net 7 hari</option>
+                  <option>Net 14 hari</option>
+                  <option>Net 30 hari</option>
                 </select>
-                {updating && (
-                  <p className="text-xs mt-1" style={{ color: '#666666' }}>
-                    Mengupdate jatuh tempo...
-                  </p>
-                )}
               </div>
 
               <div>
-                <label className="text-sm mb-2 block" style={{ color: '#666666' }}>
+                <label className="text-sm text-gray-600 mb-2 block">
                   Mata uang
                 </label>
                 <select 
-                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4b896]/50"
+                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm"
                   style={{
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
                     WebkitAppearance: 'none',
                     MozAppearance: 'none',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d4b896\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 12px center',
-                    backgroundSize: '16px'
+                    appearance: 'none'
                   }}
                 >
                   <option>IDR - Indonesian Rupiah</option>
@@ -601,8 +487,8 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
 
           {/* Payment History */}
           {payments.length > 0 && (
-            <div className="border-2 border-[#d4b896] rounded-xl p-6 shadow-lg" style={{ backgroundColor: '#ffffff' }}>
-              <h2 className="text-xl font-bold mb-6" style={{ color: '#000000' }}>
+            <div className="bg-white border-2 border-[#d4b896] rounded-xl p-6 shadow-lg">
+              <h2 className="text-xl font-bold text-black mb-6">
                 Riwayat Pembayaran
               </h2>
               <div className="space-y-3">
@@ -612,21 +498,16 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     className="pb-3 border-b border-[#d4b896]/30 last:border-0"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <p className="font-medium" style={{ color: '#000000' }}>
+                      <p className="text-black font-medium">
                         DP{payment.paymentNumber}
                       </p>
-                      <p className="font-semibold" style={{ color: '#000000' }}>
+                      <p className="text-black font-semibold">
                         {formatCurrency(payment.amount)}
                       </p>
                     </div>
-                    <p className="text-xs" style={{ color: '#666666' }}>
+                    <p className="text-xs text-gray-600">
                       {payment.paymentDate} via {payment.paymentMethod}
                     </p>
-                    {payment.notes && (
-                      <p className="text-xs mt-1 italic" style={{ color: '#888888' }}>
-                        "{payment.notes}"
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -634,44 +515,14 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
           )}
 
           {/* Notes */}
-          <div className="border-2 border-[#d4b896] rounded-xl p-6 shadow-lg" style={{ backgroundColor: '#ffffff' }}>
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#000000' }}>
+          <div className="bg-white border-2 border-[#d4b896] rounded-xl p-6 shadow-lg">
+            <h2 className="text-xl font-bold text-black mb-6">
               Catatan / Keterangan
             </h2>
-            <p className="text-sm" style={{ color: '#666666' }}>
-              {invoice.payment?.notes || "Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami sangat menghargai kepercayaan Anda."}
+            <p className="text-sm text-gray-600">
+              Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami
+              sangat menghargai kepercayaan Anda.
             </p>
-          </div>
-
-          {/* Bank Account Information */}
-          <div className="border-2 border-[#d4b896] rounded-xl p-6 shadow-lg" style={{ backgroundColor: '#ffffff' }}>
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#000000' }}>
-              Informasi Rekening
-            </h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-semibold mb-2" style={{ color: '#000000' }}>
-                  Bank BCA
-                </h3>
-                <p className="text-sm font-mono" style={{ color: '#666666' }}>
-                  774 559 3402
-                </p>
-                <p className="text-xs" style={{ color: '#666666' }}>
-                  A/N FATIMATUZ ZAHRO
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-semibold mb-2" style={{ color: '#000000' }}>
-                  Bank BRI
-                </h3>
-                <p className="text-sm font-mono" style={{ color: '#666666' }}>
-                  0601 01000 547 563
-                </p>
-                <p className="text-xs" style={{ color: '#666666' }}>
-                  A/N FATIMA TUZZAHRO
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

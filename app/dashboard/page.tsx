@@ -7,7 +7,7 @@ export default async function DashboardPage() {
         <p className="text-sm md:text-base text-gray-600">Welcome back!</p>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="bg-white border-2 border-[#d4b896] p-6 rounded-xl shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-600 text-sm font-medium">Total Clients</h3>
@@ -24,15 +24,6 @@ export default async function DashboardPage() {
           </div>
           <p className="text-3xl font-bold text-black">12</p>
           <p className="text-sm text-gray-500 mt-2">3 pending approval</p>
-        </div>
-        
-        <div className="bg-white border-2 border-[#d4b896] p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-600 text-sm font-medium">Total Products</h3>
-            <span className="material-symbols-outlined text-[#d4b896]">inventory_2</span>
-          </div>
-          <p className="text-3xl font-bold text-black">48</p>
-          <p className="text-sm text-gray-500 mt-2">8 categories</p>
         </div>
         
         <div className="bg-white border-2 border-[#d4b896] p-6 rounded-xl shadow-lg">

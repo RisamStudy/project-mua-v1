@@ -1,0 +1,48 @@
+# Files dan folders yang tidak perlu di-deploy ke production
+
+# Development files
+README.md
+.vscode/
+.git/
+
+# Documentation files
+*.md
+!CPANEL_DEPLOYMENT_GUIDE.md
+!DEPLOYMENT_CHECKLIST.md
+
+# Development dependencies (akan di-install ulang di server)
+node_modules/
+
+# Environment files (akan di-set manual di server)
+.env
+.env.local
+.env.development
+
+# Build artifacts yang akan di-generate ulang
+.next/
+
+# Development tools
+eslint.config.mjs
+postcss.config.mjs
+tailwind.config.ts
+tsconfig.json
+
+# Test files
+test-*
+*-demo.html
+*-test.*
+
+# Temporary files
+deployment-package/
+*.zip
+*.log
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

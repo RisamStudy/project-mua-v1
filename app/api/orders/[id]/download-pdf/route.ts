@@ -274,8 +274,8 @@ export async function GET(
                     
                     <div class="info-item">
                         <div class="info-label">Orang Tua Pengantin</div>
-                        <div class="info-value">Wanita: ${order.client.brideParents}</div>
-                        <div class="info-value">Pria: ${order.client.groomParents}</div>
+                        <div class="info-value">Wanita: ${order.client.brideParents || 'Belum diisi'}</div>
+                        <div class="info-value">Pria: ${order.client.groomParents || 'Belum diisi'}</div>
                     </div>
                     
                     <div class="info-item">

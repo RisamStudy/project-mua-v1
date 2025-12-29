@@ -15,8 +15,8 @@ interface Client {
   secondaryPhone: string | null;
   brideAddress: string;
   groomAddress: string;
-  brideParents: string;
-  groomParents: string;
+  brideParents: string | null;
+  groomParents: string | null;
   ceremonyDate: Date | null;
   ceremonyTime: string | null;
   ceremonyEndTime: string | null;
@@ -62,8 +62,8 @@ export default function EditClientForm({ client }: { client: Client }) {
     secondaryPhone: client.secondaryPhone || "",
     brideAddress: client.brideAddress,
     groomAddress: client.groomAddress,
-    brideParents: client.brideParents,
-    groomParents: client.groomParents,
+    brideParents: client.brideParents || "",
+    groomParents: client.groomParents || "",
     ceremonyDate: formatDateForInput(client.ceremonyDate),
     ceremonyTime: client.ceremonyTime || "",
     ceremonyEndTime: client.ceremonyEndTime || "",

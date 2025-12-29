@@ -21,11 +21,6 @@ const menuItems = [
     icon: 'shopping_bag',
   },
   {
-    name: 'Products',
-    path: '/products',
-    icon: 'inventory_2',
-  },
-  {
     name: 'Invoice',
     path: '/invoices',
     icon: 'receipt_long',

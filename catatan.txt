@@ -1,6 +1,0 @@
-# Reset migration history saja tanpa menghapus data
-npx prisma migrate resolve --applied "0_init"
-
-
-# db push akan mengupdate schema tanpa menghapus data yang ada.
-npx prisma db push

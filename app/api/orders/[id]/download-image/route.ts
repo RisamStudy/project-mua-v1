@@ -372,8 +372,8 @@ export async function GET(
                         <div class="info-item">
                             <div class="info-label">Orang Tua Pengantin</div>
                             <div class="info-value">
-                                <strong>Wanita:</strong> ${order.client.brideParents}<br>
-                                <strong>Pria:</strong> ${order.client.groomParents}
+                                <strong>Wanita:</strong> ${order.client.brideParents || 'Belum diisi'}<br>
+                                <strong>Pria:</strong> ${order.client.groomParents || 'Belum diisi'}
                             </div>
                         </div>
                     </div>
