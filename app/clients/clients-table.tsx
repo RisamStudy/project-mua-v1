@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import DeleteModal from "@/components/ui/delete-modal";
 import Toast from "@/components/ui/toast";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
 interface Client {
   id: string;
@@ -351,10 +352,20 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
                       {client.groomName}
                     </td>
                     <td className="px-6 py-4 text-gray-700">
-                      {client.primaryPhone}
+                      <WhatsAppLink 
+                        phoneNumber={client.primaryPhone} 
+                        label={`HP Pengantin Wanita - ${client.brideName}`}
+                      />
                     </td>
                     <td className="px-6 py-4 text-gray-700">
-                      {client.secondaryPhone}
+                      {client.secondaryPhone ? (
+                        <WhatsAppLink 
+                          phoneNumber={client.secondaryPhone} 
+                          label={`HP Pengantin Pria - ${client.groomName}`}
+                        />
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-gray-700">
                       {client.ceremonyDate}

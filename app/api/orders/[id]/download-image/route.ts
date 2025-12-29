@@ -532,8 +532,7 @@ export async function GET(
     
     const imageBuffer = await page.screenshot({
       type: 'png',
-      fullPage: true,
-      quality: 100
+      fullPage: true
     });
     
     await browser.close();

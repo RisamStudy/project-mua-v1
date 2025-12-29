@@ -13,6 +13,7 @@ Fitur ini menambahkan kemampuan untuk menghubungi pengantin langsung melalui Wha
 ### 2. Mapping Nomor HP
 - **Primary Phone** (`primaryPhone`) = Nomor HP Pengantin Wanita
 - **Secondary Phone** (`secondaryPhone`) = Nomor HP Pengantin Pria
+- **Label Format**: "HP Pengantin Wanita - [Nama Pengantin Wanita]" dan "HP Pengantin Pria - [Nama Pengantin Pria]"
 
 ### 3. Format Nomor WhatsApp
 - Otomatis menghapus karakter non-digit
@@ -48,7 +49,8 @@ Fitur ini menambahkan kemampuan untuk menghubungi pengantin langsung melalui Wha
 - Border: border-green-200 hover:border-green-300
 - Text: text-gray-800
 - Icon: text-green-600 dengan animasi scale saat hover
-- Label: text-gray-500 dengan font-medium
+- Label: text-gray-500 dengan font-medium dan leading-tight untuk label panjang
+- Flex-shrink-0: Untuk ikon dan teks "WhatsApp" agar tidak terpotong
 ```
 
 ### Layout

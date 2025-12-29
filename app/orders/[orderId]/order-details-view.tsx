@@ -237,22 +237,19 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
           <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
             Kontak Person
           </p>
-          <p className="text-sm sm:text-base text-black font-semibold mb-3">
-            {order.client.brideName}
-          </p>
-          
+         
           <div className="space-y-3">
             {/* Nomor HP Pengantin Wanita (Primary Phone) */}
             <WhatsAppLink
               phoneNumber={order.client.primaryPhone}
-              label="HP Pengantin Wanita"
+              label={`HP Pengantin Wanita - ${order.client.brideName}`}
             />
             
             {/* Nomor HP Pengantin Pria (Secondary Phone) */}
             {order.client.secondaryPhone && (
               <WhatsAppLink
                 phoneNumber={order.client.secondaryPhone}
-                label="HP Pengantin Pria"
+                label={`HP Pengantin Pria - ${order.client.groomName}`}
               />
             )}
           </div>
