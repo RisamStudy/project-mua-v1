@@ -15,12 +15,16 @@ interface Invoice {
   paymentNumber: number;
 }
 
+type SortField = 'clientName' | 'issueDate';
+type SortOrder = 'asc' | 'desc';
+
 export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [monthFilter, setMonthFilter] = useState<'all' | 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december'>('all');
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortField, setSortField] = useState<SortField>('clientName');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setSortMenu] = useState(false);
 
@@ -49,17 +53,27 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
     return true;
   });
 
-  // Sort invoices by client name
+  // Sort invoices
   const sortedInvoices = [...filteredInvoices];
-  if (sortOrder) {
+  if (sortField && sortOrder) {
     sortedInvoices.sort((a, b) => {
-      const nameA = a.clientName.toLowerCase();
-      const nameB = b.clientName.toLowerCase();
-      
-      if (sortOrder === 'asc') {
-        return nameA.localeCompare(nameB);
+      let aValue: any;
+      let bValue: any;
+
+      if (sortField === 'issueDate') {
+        // Handle date sorting
+        aValue = new Date(a.issueDate).getTime();
+        bValue = new Date(b.issueDate).getTime();
       } else {
-        return nameB.localeCompare(nameA);
+        // Handle name sorting
+        aValue = a.clientName.toLowerCase();
+        bValue = b.clientName.toLowerCase();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
       }
     });
   }
@@ -70,13 +84,12 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
   const endIndex = startIndex + itemsPerPage;
   const currentInvoices = sortedInvoices.slice(startIndex, endIndex);
 
-  const handleSort = () => {
-    if (sortOrder === null) {
-      setSortOrder('asc');
-    } else if (sortOrder === 'asc') {
-      setSortOrder('desc');
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortOrder(null);
+      setSortField(field);
+      setSortOrder('asc');
     }
     setSortMenu(false);
   };
@@ -182,7 +195,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                 <span className="material-symbols-outlined text-lg sm:text-xl">swap_vert</span>
                 <span className="hidden sm:inline whitespace-nowrap">Sort</span>
                 <span className="sm:hidden text-xs">Sort</span>
-                {sortOrder && (
+                {sortField && (
                   <span className="w-2 h-2 bg-[#d4b896] rounded-full flex-shrink-0"></span>
                 )}
               </button>
@@ -192,22 +205,27 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                 <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)]">
                   <div className="p-2">
                     <div className="text-xs font-medium text-gray-600 mb-2">
-                      Sort by Client Name
+                      Sort by
                     </div>
-                    <button
-                      onClick={handleSort}
-                      className="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors flex items-center justify-between text-gray-700"
-                    >
-                      <span>
-                        {sortOrder === null ? 'Default Order' : 
-                         sortOrder === 'asc' ? 'A to Z' : 'Z to A'}
-                      </span>
-                      {sortOrder && (
-                        <span className="material-symbols-outlined text-sm text-[#d4b896]">
-                          {sortOrder === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
-                        </span>
-                      )}
-                    </button>
+                    {[
+                      { field: 'clientName', label: 'Nama Klien' },
+                      { field: 'issueDate', label: 'Tanggal Diterbitkan' }
+                    ].map((option) => (
+                      <button
+                        key={option.field}
+                        onClick={() => handleSort(option.field as SortField)}
+                        className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors flex items-center justify-between ${
+                          sortField === option.field ? 'text-[#d4b896]' : 'text-gray-700'
+                        }`}
+                      >
+                        <span>{option.label}</span>
+                        {sortField === option.field && (
+                          <span className="material-symbols-outlined text-sm text-[#d4b896]">
+                            {sortOrder === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -355,7 +373,7 @@ export default function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
             Menampilkan {startIndex + 1}-
             {Math.min(endIndex, sortedInvoices.length)} of{" "}
             {sortedInvoices.length} invoices
-            {(searchQuery || monthFilter !== 'all' || sortOrder) && (
+            {(searchQuery || monthFilter !== 'all' || sortField) && (
               <span className="ml-2 text-xs">
                 (filtered/sorted)
               </span>

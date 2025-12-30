@@ -16,11 +16,15 @@ interface Client {
   receptionDate: string;
 }
 
+type SortField = 'brideName' | 'ceremonyDate' | 'receptionDate';
+type SortOrder = 'asc' | 'desc';
+
 export default function ClientsTable({ clients }: { clients: Client[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortField, setSortField] = useState<SortField>('brideName');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setSortMenu] = useState(false);
   const [monthFilter, setMonthFilter] = useState<'all' | 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december'>('all');
@@ -76,17 +80,27 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
     return true;
   });
 
-  // Sort clients by bride name
+  // Sort clients
   const sortedClients = [...filteredClients];
-  if (sortOrder) {
+  if (sortField && sortOrder) {
     sortedClients.sort((a, b) => {
-      const nameA = a.brideName.toLowerCase();
-      const nameB = b.brideName.toLowerCase();
-      
-      if (sortOrder === 'asc') {
-        return nameA.localeCompare(nameB);
+      let aValue: any;
+      let bValue: any;
+
+      if (sortField === 'ceremonyDate' || sortField === 'receptionDate') {
+        // Handle date sorting
+        aValue = a[sortField] && a[sortField] !== "-" ? new Date(a[sortField]).getTime() : 0;
+        bValue = b[sortField] && b[sortField] !== "-" ? new Date(b[sortField]).getTime() : 0;
       } else {
-        return nameB.localeCompare(nameA);
+        // Handle name sorting
+        aValue = a[sortField].toLowerCase();
+        bValue = b[sortField].toLowerCase();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
       }
     });
   }
@@ -97,13 +111,12 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
   const endIndex = startIndex + itemsPerPage;
   const currentClients = sortedClients.slice(startIndex, endIndex);
 
-  const handleSort = () => {
-    if (sortOrder === null) {
-      setSortOrder('asc');
-    } else if (sortOrder === 'asc') {
-      setSortOrder('desc');
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortOrder(null);
+      setSortField(field);
+      setSortOrder('asc');
     }
     setSortMenu(false);
   };
@@ -248,9 +261,9 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
                   className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base text-gray-600 hover:text-black transition-colors border border-[#d4b896] rounded-lg min-w-0"
                 >
                   <span className="material-symbols-outlined text-lg sm:text-xl">swap_vert</span>
-                  <span className="hidden sm:inline whitespace-nowrap">Sort</span>
+                  <span className="hidden sm:inline whitespace-nowrap">Urutkan</span>
                   <span className="sm:hidden text-xs">Sort</span>
-                  {sortOrder && (
+                  {sortField && (
                     <span className="w-2 h-2 bg-[#d4b896] rounded-full flex-shrink-0"></span>
                   )}
                 </button>
@@ -260,22 +273,28 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
                   <div className="absolute left-0 sm:right-0 top-full mt-2 w-48 sm:w-52 bg-white border-2 border-[#d4b896] rounded-lg shadow-lg z-50 max-w-[calc(100vw-2rem)]">
                     <div className="p-2">
                       <div className="text-xs font-medium text-gray-600 mb-2">
-                        Sort by Mempelai Wanita
+                        Urutkan berdasarkan
                       </div>
-                      <button
-                        onClick={handleSort}
-                        className="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors flex items-center justify-between text-gray-700"
-                      >
-                        <span>
-                          {sortOrder === null ? 'Default Order' : 
-                           sortOrder === 'asc' ? 'A to Z' : 'Z to A'}
-                        </span>
-                        {sortOrder && (
-                          <span className="material-symbols-outlined text-sm text-[#d4b896]">
-                            {sortOrder === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
-                          </span>
-                        )}
-                      </button>
+                      {[
+                        { field: 'brideName', label: 'Mempelai Wanita' },
+                        { field: 'ceremonyDate', label: 'Tanggal Akad' },
+                        { field: 'receptionDate', label: 'Tanggal Resepsi' }
+                      ].map((option) => (
+                        <button
+                          key={option.field}
+                          onClick={() => handleSort(option.field as SortField)}
+                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors flex items-center justify-between ${
+                            sortField === option.field ? 'text-[#d4b896]' : 'text-gray-700'
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          {sortField === option.field && (
+                            <span className="material-symbols-outlined text-sm text-[#d4b896]">
+                              {sortOrder === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                            </span>
+                          )}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -411,7 +430,7 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
               Menampilkan {startIndex + 1}-
               {Math.min(endIndex, sortedClients.length)} of{" "}
               {sortedClients.length} Klien
-              {(searchQuery || monthFilter !== 'all' || sortOrder) && (
+              {(searchQuery || monthFilter !== 'all' || sortField) && (
                 <span className="ml-2 text-xs">
                   (filtered/sorted)
                 </span>
