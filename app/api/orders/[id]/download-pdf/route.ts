@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import puppeteer from "puppeteer";
+import { launchBrowser } from "@/lib/puppeteer-config";
 import { format } from "date-fns";
 
 export async function GET(
@@ -414,10 +414,7 @@ export async function GET(
     `;
 
     // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    const browser = await launchBrowser();
     
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
