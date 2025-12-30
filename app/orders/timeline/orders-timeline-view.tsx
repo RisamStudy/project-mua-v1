@@ -536,6 +536,100 @@ export default function OrdersTimelineView({ timeline }: { timeline: TimelineDay
                     </div>
                   )}
 
+                  {/* Item Pesanan */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[#d4b896] text-lg">shopping_cart</span>
+                      Item Pesanan
+                    </h4>
+                    
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-[#d4b896] text-white">
+                              <th className="text-left px-3 py-2 font-medium">ITEM / PAKET</th>
+                              <th className="text-center px-2 py-2 font-medium">JML</th>
+                              <th className="text-right px-3 py-2 font-medium">HARGA</th>
+                              <th className="text-right px-3 py-2 font-medium">TOTAL</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white">
+                            {items.map((item: OrderItem, idx: number) => (
+                              <tr key={idx} className="border-b border-gray-100 last:border-b-0">
+                                <td className="px-3 py-2 text-black font-medium">{item.name}</td>
+                                <td className="px-2 py-2 text-center text-gray-700">{item.quantity}</td>
+                                <td className="px-3 py-2 text-right text-gray-700">
+                                  {formatCurrency(item.price.toString())}
+                                </td>
+                                <td className="px-3 py-2 text-right text-black font-semibold">
+                                  {formatCurrency(item.total.toString())}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="bg-[#d4b896]/10 border-t-2 border-[#d4b896]">
+                              <td colSpan={3} className="px-3 py-2 text-black font-bold">TOTAL</td>
+                              <td className="px-3 py-2 text-right text-black font-bold">
+                                {formatCurrency(order.totalAmount)}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Pembayaran */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[#d4b896] text-lg">payments</span>
+                      Status Pembayaran
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            order.paymentStatus === "Lunas" ? "bg-green-500" : "bg-yellow-500"
+                          }`} />
+                          <span className="text-sm font-medium text-black">{order.paymentStatus}</span>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.paymentStatus)}`}>
+                          {order.paymentStatus}
+                        </span>
+                      </div>
+
+                      {order.paymentStatus === "Belum Lunas" && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-xs text-red-800 font-medium">
+                            Sisa pembayaran: <span className="font-bold">{formatCurrency(order.remainingAmount)}</span>
+                          </p>
+                        </div>
+                      )}
+
+                      {order.payments.length > 0 && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <p className="text-xs font-medium text-green-800 mb-2">Riwayat Pembayaran</p>
+                          <div className="space-y-1">
+                            {order.payments.map((payment) => (
+                              <div key={payment.id} className="flex justify-between items-center text-xs">
+                                <div>
+                                  <span className="font-medium text-green-900">DP{payment.paymentNumber}</span>
+                                  <span className="text-green-700 ml-2">{payment.paymentDate}</span>
+                                </div>
+                                <span className="font-semibold text-green-900">
+                                  {formatCurrency(payment.amount)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Catatan */}
                   {order.specialRequest && (
                     <div>

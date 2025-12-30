@@ -46,6 +46,39 @@ interface OrderItem {
 
 export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
   const [downloading, setDownloading] = useState(false);
+  const [paymentTerms, setPaymentTerms] = useState<string>("7"); // Default 7 hari
+  const [currency, setCurrency] = useState<string>("IDR");
+
+  // Calculate due date based on payment terms
+  const calculateDueDate = (issueDate: string, terms: string): string => {
+    const issue = new Date(issueDate);
+    let dueDate = new Date(issue);
+    
+    switch (terms) {
+      case "1":
+        dueDate.setDate(issue.getDate() + 1);
+        break;
+      case "3":
+        dueDate.setDate(issue.getDate() + 3);
+        break;
+      case "7":
+        dueDate.setDate(issue.getDate() + 7);
+        break;
+      case "30":
+        dueDate.setMonth(issue.getMonth() + 1);
+        break;
+      default:
+        dueDate.setDate(issue.getDate() + 7);
+    }
+    
+    return dueDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const dynamicDueDate = calculateDueDate(invoice.issueDate, paymentTerms);
 
   // Parse items - handle both array and stringified JSON
   const parseItems = (itemsData: unknown): OrderItem[] => {
@@ -266,7 +299,7 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     {invoice.dueDate && (
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-600">Jatuh Tempo:</span>
-                        <span className="font-semibold">{invoice.dueDate}</span>
+                        <span className="font-semibold">{dynamicDueDate}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xs">
@@ -308,7 +341,7 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                     {invoice.dueDate && (
                       <div className="flex justify-between text-xs md:text-sm">
                         <span className="text-gray-600">Jatuh Tempo:</span>
-                        <span className="font-semibold">{invoice.dueDate}</span>
+                        <span className="font-semibold">{dynamicDueDate}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xs md:text-sm">
@@ -453,17 +486,23 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                   Syarat Pembayaran
                 </label>
                 <select 
-                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm"
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm focus:outline-none focus:border-[#c4a886]"
                   style={{
                     WebkitAppearance: 'none',
                     MozAppearance: 'none',
                     appearance: 'none'
                   }}
                 >
-                  <option>Net 7 hari</option>
-                  <option>Net 14 hari</option>
-                  <option>Net 30 hari</option>
+                  <option value="1">Net 1 hari</option>
+                  <option value="3">Net 3 hari</option>
+                  <option value="7">Net 7 hari</option>
+                  <option value="30">Net 1 bulan</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Jatuh tempo: {dynamicDueDate}
+                </p>
               </div>
 
               <div>
@@ -471,15 +510,17 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
                   Mata uang
                 </label>
                 <select 
-                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full h-10 rounded-lg border-2 border-[#d4b896] bg-white px-4 text-black text-sm focus:outline-none focus:border-[#c4a886]"
                   style={{
                     WebkitAppearance: 'none',
                     MozAppearance: 'none',
                     appearance: 'none'
                   }}
                 >
-                  <option>IDR - Indonesian Rupiah</option>
-                  <option>USD - US Dollar</option>
+                  <option value="IDR">IDR - Indonesian Rupiah</option>
+                  <option value="USD">USD - US Dollar</option>
                 </select>
               </div>
             </div>
