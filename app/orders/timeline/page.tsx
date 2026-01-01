@@ -48,6 +48,8 @@ async function getOrdersTimeline() {
             eventLocation: true,
             brideAddress: true,
             groomAddress: true,
+            brideParents: true,
+            groomParents: true,
           }
         },
         payments: {
@@ -96,6 +98,8 @@ async function getOrdersTimeline() {
         eventLocation: order.client.eventLocation,
         brideAddress: order.client.brideAddress,
         groomAddress: order.client.groomAddress,
+        brideParents: order.client.brideParents,
+        groomParents: order.client.groomParents,
       },
       eventLocation: order.eventLocation,
       items: order.items as unknown as string | null,

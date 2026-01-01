@@ -186,17 +186,21 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
         {/* Search and Filters - Responsive */}
         <div className="p-4 sm:p-6 border-b border-[#d4b896]" style={{ overflow: 'visible' }}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="relative flex-1">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                search
-              </span>
-              <input
-                type="text"
-                placeholder="Cari Klien..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border-2 border-[#d4b896] rounded-lg pl-12 pr-4 py-3 text-sm md:text-base text-black placeholder:text-gray-500 focus:outline-none focus:border-[#c4a886]"
-              />
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-gray-500 text-xl">
+                    search
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Cari Klien..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border-2 border-[#d4b896] rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:border-[#c4a886] sm:text-sm md:text-base"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 relative">
               {/* Filter Button */}

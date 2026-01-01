@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import OrderCard from "./order-card";
 
 interface OrderItem {
@@ -72,7 +69,6 @@ interface TimelineDay {
 export default function OrdersTimelineView({ timeline }: { timeline: TimelineDay[] }) {
   const [currentDateIndex, setCurrentDateIndex] = useState(0);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToDate = (direction: 'prev' | 'next') => {
     if (direction === 'prev' && currentDateIndex > 0) {
