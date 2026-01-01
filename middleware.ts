@@ -1,48 +1,76 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+
+// Simple in-memory rate limiting (for production, use Redis)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+function rateLimit(ip: string, limit: number = 10, windowMs: number = 15 * 60 * 1000): boolean {
+  const now = Date.now();
+  const key = ip;
+  
+  const record = rateLimitMap.get(key);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  
+  if (record.count >= limit) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth_token");
   const { pathname } = request.nextUrl;
-
-  // Public paths yang boleh diakses tanpa login
-  const publicPaths = ["/login"];
-  const isPublicPath = publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(path + "/")
-  );
-
-  // Root path - redirect based on auth status
-  if (pathname === "/") {
-    if (token) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
+  
+  // Enforce HTTPS in production
+  if (
+    process.env.NODE_ENV === 'production' && 
+    request.headers.get('x-forwarded-proto') !== 'https'
+  ) {
+    return NextResponse.redirect(
+      `https://${request.headers.get('host')}${pathname}`,
+      301
+    );
   }
-
-  // Jika user sudah login dan coba akses login page
-  if (isPublicPath && token) {
-    // PREVENT LOOP: Check if we're already redirecting
-    const referer = request.headers.get("referer");
-    if (referer?.includes("/dashboard")) {
-      return NextResponse.next();
+  
+  // Rate limiting for login endpoint
+  if (pathname === '/api/auth/login') {
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown';
+    
+    if (!rateLimit(ip, 5, 15 * 60 * 1000)) { // 5 attempts per 15 minutes
+      return NextResponse.json(
+        { message: 'Too many login attempts. Please try again later.' },
+        { status: 429 }
+      );
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
-  // Jika user belum login dan coba akses protected route
-  if (!isPublicPath && !token) {
-    const loginUrl = new URL("/login", request.url);
-    if (pathname !== "/") {
-      loginUrl.searchParams.set("from", pathname);
+  
+  // Rate limiting for sensitive endpoints
+  if (pathname.includes('/download-') || pathname.includes('/generate-')) {
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown';
+    
+    if (!rateLimit(ip, 20, 60 * 1000)) { // 20 requests per minute
+      return NextResponse.json(
+        { message: 'Rate limit exceeded. Please slow down.' },
+        { status: 429 }
+      );
     }
-    return NextResponse.redirect(loginUrl);
   }
-
+  
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    '/api/auth/login',
+    '/api/:path*/download-:type*',
+    '/api/:path*/generate-:type*',
   ],
 };

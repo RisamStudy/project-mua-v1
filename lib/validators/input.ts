@@ -6,7 +6,61 @@ export function sanitizeString(
     throw new Error("Input must be a string");
   }
 
-  return input.trim().slice(0, maxLength).replace(/[<>]/g, "");
+  // More comprehensive XSS prevention
+  return input
+    .trim()
+    .slice(0, maxLength)
+    .replace(/[<>'"&]/g, (match) => {
+      const htmlEntities: { [key: string]: string } = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '&': '&amp;'
+      };
+      return htmlEntities[match] || match;
+    })
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '');
+}
+
+export function validatePhoneNumber(phone: string): string {
+  if (typeof phone !== "string") {
+    throw new Error("Phone number must be a string");
+  }
+  
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length < 10 || cleaned.length > 15) {
+    throw new Error("Phone number must be between 10-15 digits");
+  }
+  
+  return cleaned;
+}
+
+export function validateEmail(email: string): string {
+  if (typeof email !== "string") {
+    throw new Error("Email must be a string");
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error("Invalid email format");
+  }
+  
+  return email.toLowerCase().trim();
+}
+
+export function validateDate(dateString: string): Date {
+  if (typeof dateString !== "string") {
+    throw new Error("Date must be a string");
+  }
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date format");
+  }
+  
+  return date;
 }
 
 export function validateId(id: unknown): string {

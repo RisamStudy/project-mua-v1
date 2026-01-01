@@ -10,6 +10,7 @@ interface PaymentData {
   amount: string;
   paymentDate: string;
   paymentMethod: string;
+  notes?: string | null;
 }
 
 interface InvoiceData {
@@ -101,17 +102,46 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
     return `Rp ${parseFloat(amount).toLocaleString("id-ID")}`;
   };
 
+
+
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
-      // Safari-specific print handling
-      if (typeof window !== 'undefined') {
-        // Hide any potential overlays or menus
-        document.body.style.overflow = 'visible';
-        window.print();
+      const response = await fetch(`/api/invoices/${invoice.id}/download-pdf`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const htmlContent = await response.text();
+      
+      // Create a new window with the HTML content
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then trigger print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            // Close the window after printing (optional)
+            // printWindow.close();
+          }, 500);
+        };
       }
     } catch (error) {
       console.error("Download error:", error);
+      // Fallback to print if API fails
+      if (typeof window !== 'undefined') {
+        document.body.style.overflow = 'visible';
+        window.print();
+      }
     } finally {
       setDownloading(false);
     }
@@ -158,25 +188,31 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
               {invoice.order.orderNumber}.
             </p>
           </div>
-          <Button
-            onClick={handleDownloadPDF}
-            disabled={downloading}
-            className="bg-[#d4b896] hover:bg-[#c4a886] text-black flex-shrink-0 border border-[#d4b896]"
-          >
-            {downloading ? (
-              <span className="flex items-center gap-2">
-                <span className="material-symbols-outlined animate-spin">
-                  refresh
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={downloading}
+              className="bg-[#d4b896] hover:bg-[#c4a886] text-black border border-[#d4b896] px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-w-[120px] sm:min-w-[140px] md:min-w-[160px] flex-shrink-0"
+            >
+              {downloading ? (
+                <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                  <span className="material-symbols-outlined animate-spin text-sm sm:text-base md:text-lg">
+                    refresh
+                  </span>
+                  <span className="hidden xs:inline">Membuat PDF...</span>
+                  <span className="xs:hidden">Proses...</span>
                 </span>
-                Generating...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <span className="material-symbols-outlined">download</span>
-                <span>Generate & Download PDF</span>
-              </span>
-            )}
-          </Button>
+              ) : (
+                <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                  <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">
+                    download
+                  </span>
+                  <span className="hidden xs:inline">Download PDF</span>
+                  <span className="xs:hidden">PDF</span>
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -460,16 +496,62 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
             </div>
 
             {/* Footer Notes */}
-            {invoice.notes && (
-              <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
-                <h3 className="text-xs font-bold mb-2 text-[#d4b896] uppercase tracking-wide">
-                  Catatan / Keterangan
-                </h3>
-                <p className="text-xs md:text-sm text-gray-600">
-                  {invoice.notes}
-                </p>
+            <div className="mt-8 md:mt-12 pt-6 border-t border-[#d4b896]">
+              <h3 className="text-xs font-bold mb-3 text-[#d4b896] uppercase tracking-wide">
+                Catatan / Keterangan
+              </h3>
+              <div className="space-y-3">
+                {/* Dynamic invoice description based on payment */}
+                {invoice.payment && (
+                  <div className="space-y-1">
+                    <p className="text-xs md:text-sm text-gray-600">
+                      Invoice untuk pembayaran DP{invoice.payment.paymentNumber} - {invoice.order.orderNumber}
+                    </p>
+                    <p className="text-xs md:text-sm text-gray-600">
+                      <strong>Metode Pembayaran:</strong> {invoice.payment.paymentMethod || 'Transfer Bank'}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Payment notes if available */}
+                {invoice.payment?.notes && (
+                  <p className="text-xs md:text-sm text-gray-600">
+                    Catatan pembayaran: {invoice.payment.notes}
+                  </p>
+                )}
+                
+                {/* Invoice notes if available */}
+                {invoice.notes && (
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {invoice.notes}
+                  </p>
+                )}
+                
+                {/* Default thank you message if no specific notes */}
+                {!invoice.notes && !invoice.payment?.notes && (
+                  <p className="text-xs md:text-sm text-gray-600">
+                    Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami sangat menghargai kepercayaan Anda.
+                  </p>
+                )}
               </div>
-            )}
+              
+              {/* Bank Information Footer */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <p className="text-xs font-semibold text-gray-700 mb-2 text-center">
+                  Informasi Rekening Bank
+                </p>
+                <div className="flex justify-center gap-6 text-xs text-gray-600">
+                  <div className="text-center">
+                    <p><strong>BCA:</strong> 774 559 3402</p>
+                    <p className="text-[10px]">A/N FATIMATUZ ZAHRO</p>
+                  </div>
+                  <div className="text-center">
+                    <p><strong>BRI:</strong> 0601 01000 547 563</p>
+                    <p className="text-[10px]">A/N FATIMA TUZZAHRO</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -560,10 +642,33 @@ export default function InvoicePreview({ invoice }: { invoice: InvoiceData }) {
             <h2 className="text-xl font-bold text-black mb-6">
               Catatan / Keterangan
             </h2>
-            <p className="text-sm text-gray-600">
-              Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami
-              sangat menghargai kepercayaan Anda.
-            </p>
+            <div className="space-y-3 text-sm text-gray-600">
+              {/* Dynamic invoice description */}
+              {invoice.payment && (
+                <p>
+                  <strong>Invoice untuk:</strong> Pembayaran DP{invoice.payment.paymentNumber} - {invoice.order.orderNumber}
+                </p>
+              )}
+              
+              {/* Payment notes */}
+              {invoice.payment?.notes && (
+                <p>
+                  <strong>Catatan pembayaran:</strong> {invoice.payment.notes}
+                </p>
+              )}
+              
+              {/* Invoice notes */}
+              {invoice.notes && (
+                <p>
+                  <strong>Keterangan tambahan:</strong> {invoice.notes}
+                </p>
+              )}
+              
+              {/* Default message */}
+              <p className="mt-4 pt-3 border-t border-gray-200">
+                Terima kasih telah memilih Roro MUA untuk hari istimewa Anda! Kami sangat menghargai kepercayaan Anda.
+              </p>
+            </div>
           </div>
         </div>
       </div>

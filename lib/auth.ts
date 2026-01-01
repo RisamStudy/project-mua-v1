@@ -13,8 +13,11 @@ export interface User {
 }
 
 // Secret key untuk JWT (HARUS di environment variable)
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-const TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 hari
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 jam (lebih aman)
 
 // Verifikasi password
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {

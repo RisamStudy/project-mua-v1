@@ -150,17 +150,23 @@ export async function POST(
   } catch (error: unknown) {
     console.error("Generate invoice error:", error);
     
-    // More detailed error logging
-    if (error instanceof Error) {
+    // More detailed error logging for development
+    if (process.env.NODE_ENV === 'development' && error instanceof Error) {
       console.error("Error name:", error.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
     }
     
+    // Generic error message for production to prevent information disclosure
+    const message = process.env.NODE_ENV === 'production' 
+      ? "An error occurred while generating the invoice. Please try again later."
+      : (error instanceof Error ? error.message : "Failed to generate invoice");
+    
     return NextResponse.json(
       {
-        message: error instanceof Error ? error.message : "Failed to generate invoice",
-        error: process.env.NODE_ENV === 'development' ? error : undefined,
+        message,
+        // Only include error details in development
+        ...(process.env.NODE_ENV === 'development' && { error }),
       },
       { status: 500 }
     );

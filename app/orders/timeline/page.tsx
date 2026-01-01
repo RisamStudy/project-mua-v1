@@ -3,20 +3,70 @@ import { format, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
 import { id } from "date-fns/locale";
 import OrdersTimelineView from "./orders-timeline-view";
 
-// Force dynamic rendering
+// Force dynamic rendering with revalidation
 export const dynamic = "force-dynamic";
+export const revalidate = 300; // Cache for 5 minutes
 
 async function getOrdersTimeline() {
   try {
+    // Optimized query: only get orders with event dates and limit fields
     const orders = await prisma.order.findMany({
-      include: {
-        client: true,
+      where: {
+        OR: [
+          { client: { ceremonyDate: { not: null } } },
+          { client: { receptionDate: { not: null } } }
+        ]
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        eventLocation: true,
+        items: true,
+        stageModelPhoto: true,
+        chairModel: true,
+        tentColorPhoto: true,
+        softlensColor: true,
+        dressPhotos: true,
+        specialRequest: true,
+        totalAmount: true,
+        paidAmount: true,
+        remainingAmount: true,
+        paymentStatus: true,
+        createdAt: true,
+        client: {
+          select: {
+            brideName: true,
+            groomName: true,
+            primaryPhone: true,
+            secondaryPhone: true,
+            ceremonyDate: true,
+            ceremonyTime: true,
+            ceremonyEndTime: true,
+            receptionDate: true,
+            receptionTime: true,
+            receptionEndTime: true,
+            eventLocation: true,
+            brideAddress: true,
+            groomAddress: true,
+          }
+        },
         payments: {
+          select: {
+            id: true,
+            paymentNumber: true,
+            amount: true,
+            paymentDate: true,
+            notes: true,
+          },
           orderBy: {
             paymentNumber: "asc",
           },
         },
       },
+      orderBy: [
+        { client: { ceremonyDate: "asc" } },
+        { client: { receptionDate: "asc" } }
+      ]
     });
 
     // Helper function to safely convert JsonValue to string array

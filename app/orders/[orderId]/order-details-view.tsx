@@ -7,7 +7,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast";
 import PaymentModal from "@/components/orders/payment-modal";
-import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
 interface OrderItem {
@@ -63,7 +62,7 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
   const router = useRouter();
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [downloadingImage, setDownloadingImage] = useState(false);
+
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [toast, setToast] = useState<{
@@ -149,25 +148,33 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
         throw new Error("Failed to generate PDF");
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Order-${order.orderNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const htmlContent = await response.text();
+      
+      // Create a new window with the HTML content
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then trigger print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            // Close the window after printing (optional)
+            // printWindow.close();
+          }, 500);
+        };
+      }
 
       setToast({
         isOpen: true,
-        message: "PDF berhasil didownload!",
+        message: "Halaman PDF siap untuk dicetak!",
         type: "success",
       });
     } catch (err: unknown) {
       setToast({
         isOpen: true,
-        message: err instanceof Error ? err.message : "Gagal mendownload PDF",
+        message: err instanceof Error ? err.message : "Gagal membuat PDF",
         type: "error",
       });
     } finally {
@@ -175,40 +182,7 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
     }
   };
 
-  const handleDownloadImage = async () => {
-    setDownloadingImage(true);
-    try {
-      const response = await fetch(`/api/orders/${order.id}/download-image`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to generate image");
-      }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Order-${order.orderNumber}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      setToast({
-        isOpen: true,
-        message: "Gambar berhasil didownload!",
-        type: "success",
-      });
-    } catch (err: unknown) {
-      setToast({
-        isOpen: true,
-        message: err instanceof Error ? err.message : "Gagal mendownload gambar",
-        type: "error",
-      });
-    } finally {
-      setDownloadingImage(false);
-    }
-  };
 
   const handlePaymentSuccess = () => {
     setIsPaymentModalOpen(false);
@@ -625,96 +599,62 @@ export default function OrderDetailsView({ order }: { order: OrderDetails }) {
                 Tampilan detail pesanan untuk {order.client.brideName}.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full xs:w-auto">
               <Link
                 href={`/orders/${order.id}/edit`}
-                className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 border border-[#d4b896] text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-gray-100 hover:bg-gray-200 border border-[#d4b896] text-black px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 rounded-lg text-xs sm:text-sm md:text-base font-medium transition-colors w-full sm:w-auto min-w-[120px] sm:min-w-[140px] md:min-w-[160px]"
               >
-                <span className="material-symbols-outlined text-lg sm:text-xl">
+                <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">
                   edit
                 </span>
-                <span>Ubah Pesanan</span>
+                <span className="hidden xs:inline">Ubah Pesanan</span>
+                <span className="xs:hidden">Edit</span>
               </Link>
               
-              <DropdownMenu
-                align="left"
-                trigger={
-                  <Button className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3">
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-lg sm:text-xl">
-                        download
-                      </span>
-                      <span>Download</span>
-                      <span className="material-symbols-outlined text-lg sm:text-xl">
-                        expand_more
-                      </span>
-                    </span>
-                  </Button>
-                }
+              <Button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-w-[120px] sm:min-w-[140px] md:min-w-[160px]"
               >
-                <DropdownMenuItem
-                  onClick={handleDownloadPdf}
-                  disabled={downloadingPdf}
-                  className={downloadingPdf ? "opacity-50" : ""}
-                >
-                  {downloadingPdf ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-lg">
-                        refresh
-                      </span>
-                      <span>Generating PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-lg text-red-600">
-                        picture_as_pdf
-                      </span>
-                      <span>Download sebagai PDF</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem
-                  onClick={handleDownloadImage}
-                  disabled={downloadingImage}
-                  className={downloadingImage ? "opacity-50" : ""}
-                >
-                  {downloadingImage ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-lg">
-                        refresh
-                      </span>
-                      <span>Generating Image...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-lg text-blue-600">
-                        image
-                      </span>
-                      <span>Download sebagai Gambar</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenu>
+                {downloadingPdf ? (
+                  <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                    <span className="material-symbols-outlined animate-spin text-sm sm:text-base md:text-lg">
+                      refresh
+                    </span>
+                    <span className="hidden xs:inline">Membuat PDF...</span>
+                    <span className="xs:hidden">Proses...</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                    <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">
+                      download
+                    </span>
+                    <span className="hidden xs:inline">Download PDF</span>
+                    <span className="xs:hidden">PDF</span>
+                  </span>
+                )}
+              </Button>
               
               <Button
                 onClick={handleGenerateInvoice}
                 disabled={generatingInvoice}
-                className="bg-[#d4b896] hover:bg-[#c4a886] text-black text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                className="bg-[#d4b896] hover:bg-[#c4a886] text-black px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-w-[120px] sm:min-w-[140px] md:min-w-[160px]"
               >
                 {generatingInvoice ? (
-                  <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined animate-spin text-lg sm:text-xl">
+                  <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                    <span className="material-symbols-outlined animate-spin text-sm sm:text-base md:text-lg">
                       refresh
                     </span>
-                    <span>Generating...</span>
+                    <span className="hidden xs:inline">Generating...</span>
+                    <span className="xs:hidden">Proses...</span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg sm:text-xl">
+                  <span className="flex items-center gap-1.5 sm:gap-2 justify-center">
+                    <span className="material-symbols-outlined text-sm sm:text-base md:text-lg">
                       receipt_long
                     </span>
-                    <span>Buat Faktur</span>
+                    <span className="hidden xs:inline">Buat Faktur</span>
+                    <span className="xs:hidden">Faktur</span>
                   </span>
                 )}
               </Button>

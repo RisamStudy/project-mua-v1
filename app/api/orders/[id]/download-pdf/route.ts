@@ -1,7 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { launchBrowser } from "@/lib/puppeteer-config";
 import { format } from "date-fns";
+import fs from 'fs';
+import path from 'path';
+
+// Function to convert logo to base64
+async function getLogoBase64(): Promise<string> {
+  try {
+    // Try logo.png first, then logo1.png as fallback
+    const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+    const logoPath1 = path.join(process.cwd(), 'public', 'logo1.png');
+    
+    let logoBuffer: Buffer;
+    
+    if (fs.existsSync(logoPath)) {
+      logoBuffer = fs.readFileSync(logoPath);
+    } else if (fs.existsSync(logoPath1)) {
+      logoBuffer = fs.readFileSync(logoPath1);
+    } else {
+      // Fallback: create a simple SVG logo
+      const svgLogo = `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="40" cy="40" r="35" fill="#d4b896"/>
+        <text x="40" y="50" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">RORO</text>
+      </svg>`;
+      return `data:image/svg+xml;base64,${Buffer.from(svgLogo).toString('base64')}`;
+    }
+    
+    return logoBuffer.toString('base64');
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    // Fallback SVG
+    const svgLogo = `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="35" fill="#d4b896"/>
+      <text x="40" y="50" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">RORO</text>
+    </svg>`;
+    return `data:image/svg+xml;base64,${Buffer.from(svgLogo).toString('base64')}`;
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -56,6 +91,9 @@ export async function GET(
     const items = parseItems(order.items);
     const dressPhotos = jsonToStringArray(order.dressPhotos) || [];
 
+    // Get logo as base64
+    const logoBase64 = await getLogoBase64();
+
     const formatCurrency = (amount: string | number) => {
       return `Rp ${parseFloat(amount.toString()).toLocaleString("id-ID")}`;
     };
@@ -96,6 +134,33 @@ export async function GET(
                 margin-bottom: 30px;
                 border-bottom: 3px solid #d4b896;
                 padding-bottom: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+            }
+            
+            .logo {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 3px 10px rgba(212, 184, 150, 0.3);
+                overflow: hidden;
+                background: white;
+                border: 2px solid #d4b896;
+                flex-shrink: 0;
+            }
+            .logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            
+            .header-content {
+                text-align: center;
             }
             
             .header h1 {
@@ -244,9 +309,14 @@ export async function GET(
         <div class="container">
             <!-- Header -->
             <div class="header">
-                <h1>Detail Pesanan</h1>
-                <p>Order #${order.orderNumber}</p>
-                <p>Tanggal: ${format(new Date(order.createdAt), "dd MMMM yyyy")}</p>
+                <div class="logo">
+                    <img src="${logoBase64.startsWith('data:') ? logoBase64 : `data:image/png;base64,${logoBase64}`}" alt="RORO MUA Logo" />
+                </div>
+                <div class="header-content">
+                    <h1>Detail Pesanan</h1>
+                    <p>Order #${order.orderNumber}</p>
+                    <p>Tanggal: ${format(new Date(order.createdAt), "dd MMMM yyyy")}</p>
+                </div>
             </div>
 
             <!-- Client Details -->
@@ -256,8 +326,8 @@ export async function GET(
                     <div class="info-item">
                         <div class="info-label">Kontak Person</div>
                         <div class="info-value">${order.client.brideName}</div>
-                        <div class="info-value">${order.client.primaryPhone}</div>
-                        ${order.client.secondaryPhone ? `<div class="info-value">${order.client.secondaryPhone}</div>` : ''}
+                        <div class="info-value"><strong>HP Pengantin Wanita:</strong> ${order.client.primaryPhone}</div>
+                        ${order.client.secondaryPhone ? `<div class="info-value"><strong>HP Pengantin Pria:</strong> ${order.client.secondaryPhone}</div>` : ''}
                     </div>
                     
                     <div class="info-item">
@@ -273,9 +343,13 @@ export async function GET(
                     </div>
                     
                     <div class="info-item">
-                        <div class="info-label">Orang Tua Pengantin</div>
-                        <div class="info-value">Wanita: ${order.client.brideParents || 'Belum diisi'}</div>
-                        <div class="info-value">Pria: ${order.client.groomParents || 'Belum diisi'}</div>
+                        <div class="info-label">Orang Tua Pengantin Wanita</div>
+                        <div class="info-value">${order.client.brideParents || 'Belum diisi'}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Orang Tua Pengantin Pria</div>
+                        <div class="info-value">${order.client.groomParents || 'Belum diisi'}</div>
                     </div>
                     
                     <div class="info-item">
@@ -338,10 +412,24 @@ export async function GET(
             <div class="section">
                 <h2>Pilihan Kustom</h2>
                 <div class="custom-options">
+                    ${order.stageModelPhoto ? `
+                        <div class="info-item">
+                            <div class="info-label">Model Pelaminan</div>
+                            <div class="info-value">Foto Model Pelaminan tersedia</div>
+                        </div>
+                    ` : ''}
+                    
                     ${order.chairModel ? `
                         <div class="info-item">
                             <div class="info-label">Kursi Pelaminan</div>
                             <div class="info-value">${order.chairModel}</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${order.tentColorPhoto ? `
+                        <div class="info-item">
+                            <div class="info-label">Warna Kain Tenda</div>
+                            <div class="info-value">Foto Warna Kain Tenda tersedia</div>
                         </div>
                     ` : ''}
                     
@@ -355,7 +443,15 @@ export async function GET(
                     ${dressPhotos.length > 0 ? `
                         <div class="info-item">
                             <div class="info-label">Foto Gaun</div>
-                            <div class="info-value">${dressPhotos.length} Foto</div>
+                            <div class="info-value">${dressPhotos.length} Foto tersedia</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${!order.chairModel && !order.softlensColor && dressPhotos.length === 0 && !order.stageModelPhoto && !order.tentColorPhoto ? `
+                        <div class="info-item">
+                            <div class="info-value" style="text-align: center; color: #666; font-style: italic;">
+                                Tidak ada pilihan kustom yang dipilih
+                            </div>
                         </div>
                     ` : ''}
                 </div>
@@ -399,8 +495,8 @@ export async function GET(
             ${order.specialRequest ? `
                 <!-- Notes -->
                 <div class="section">
-                    <h2>Catatan</h2>
-                    <div class="info-value" style="white-space: pre-wrap;">${order.specialRequest}</div>
+                    <h2>Catatan Khusus</h2>
+                    <div class="info-value" style="white-space: pre-wrap; font-style: italic; background: #fff9e6; padding: 15px; border-radius: 8px; border: 2px solid #d4b896;">${order.specialRequest}</div>
                 </div>
             ` : ''}
 
@@ -413,30 +509,11 @@ export async function GET(
     </html>
     `;
 
-    // Generate PDF using Puppeteer
-    const browser = await launchBrowser();
-    
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
-      }
-    });
-    
-    await browser.close();
-
-    // Return PDF as response
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    // Return HTML content that can be printed as PDF by the browser
+    return new NextResponse(htmlContent, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Order-${order.orderNumber}.pdf"`
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': `inline; filename="Order-${order.orderNumber}.html"`
       }
     });
 
