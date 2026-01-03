@@ -50,44 +50,69 @@ interface OrderItem {
 
 const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // Safari compatibility check
+    if (!window.FileReader || !window.HTMLCanvasElement) {
+      reject(new Error('Browser tidak mendukung kompresi gambar'));
+      return;
+    }
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (e) => {
       const img = new Image();
+      img.crossOrigin = 'anonymous'; // Safari compatibility
       img.src = e.target?.result as string;
+      
       img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
 
-        const maxWidth = 1200;
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
+          const maxWidth = 1200;
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error('Tidak dapat membuat context canvas'));
+            return;
+          }
+
+          // Safari-specific canvas settings
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Safari prefers callback approach over Promise
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = () => reject(new Error('Gagal membaca hasil kompresi'));
+              } else {
+                reject(new Error('Gagal mengkompresi gambar'));
+              }
+            },
+            "image/jpeg",
+            0.85
+          );
+        } catch (error) {
+          reject(error);
         }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const reader = new FileReader();
-              reader.readAsDataURL(blob);
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-            }
-          },
-          "image/jpeg",
-          0.85
-        );
       };
-      img.onerror = reject;
+      
+      img.onerror = () => reject(new Error('Gagal memuat gambar'));
     };
-    reader.onerror = reject;
+    
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
   });
 };
 
@@ -264,6 +289,8 @@ export default function EditOrderForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Safari compatibility
+    
     setLoading(true);
     setError("");
 
@@ -280,33 +307,52 @@ export default function EditOrderForm({
     }
 
     try {
+      const requestBody = {
+        clientId: selectedClient,
+        eventLocation,
+        items: items.map(({ id: _id, ...item }) => item),
+        stageModelPhoto: stageModelPhoto || null,
+        chairModel,
+        tentColorPhoto: tentColorPhoto || null,
+        softlensColor,
+        dressPhotos: dressPhotos.filter((p) => p !== ""),
+        specialRequest,
+        totalAmount: grandTotal,
+        paymentStatus,
+      };
+
       const response = await fetch(`/api/orders/${order.id}/update`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClient,
-          eventLocation,
-          items: items.map(({ id: _id, ...item }) => item),
-          stageModelPhoto: stageModelPhoto || null,
-          chairModel,
-          tentColorPhoto: tentColorPhoto || null,
-          softlensColor,
-          dressPhotos: dressPhotos.filter((p) => p !== ""),
-          specialRequest,
-          totalAmount: grandTotal,
-          paymentStatus,
-        }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json", // Safari compatibility
+        },
+        body: JSON.stringify(requestBody),
+        credentials: 'same-origin', // Safari CORS compatibility
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update order");
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        throw new Error(errorData.message || "Failed to update order");
       }
 
-      router.push("/orders");
-      router.refresh();
+      const data = await response.json();
+      
+      // Safari-compatible navigation
+      if (typeof window !== 'undefined') {
+        window.location.href = '/orders';
+      } else {
+        router.push("/orders");
+        router.refresh();
+      }
     } catch (err: unknown) {
+      console.error('Submit error:', err);
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);

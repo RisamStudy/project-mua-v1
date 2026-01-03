@@ -137,6 +137,10 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
         `/api/orders/${deleteModal.orderId}/delete`,
         {
           method: "DELETE",
+          headers: {
+            "Accept": "application/json", // Safari compatibility
+          },
+          credentials: 'same-origin', // Safari CORS compatibility
         }
       );
 
@@ -147,16 +151,29 @@ export default function OrdersTable({ orders }: { orders: Order[] }) {
           message: "Order deleted successfully",
           type: "success",
         });
-        setTimeout(() => window.location.reload(), 1500);
+        
+        // Safari-compatible page reload
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }, 1500);
       } else {
-        const data = await response.json();
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         setToast({
           isOpen: true,
-          message: data.message || "Failed to delete order",
+          message: errorData.message || "Failed to delete order",
           type: "error",
         });
       }
-    } catch {
+    } catch (error) {
+      console.error('Delete error:', error);
       setToast({
         isOpen: true,
         message: "Failed to delete order",

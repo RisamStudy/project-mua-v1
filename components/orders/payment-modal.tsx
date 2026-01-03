@@ -34,6 +34,8 @@ export default function PaymentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Safari compatibility
+    
     setLoading(true);
     setError("");
 
@@ -57,23 +59,36 @@ export default function PaymentModal({
     }
 
     try {
+      const requestBody = {
+        amount,
+        paymentMethod: formData.paymentMethod,
+        notes:
+          formData.notes ||
+          `Pembayaran DP${nextPaymentNumber} untuk pesanan ${orderNumber}`,
+      };
+
       const response = await fetch(`/api/orders/${orderId}/add-payment`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          paymentMethod: formData.paymentMethod,
-          notes:
-            formData.notes ||
-            `Pembayaran DP${nextPaymentNumber} untuk pesanan ${orderNumber}`,
-        }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json", // Safari compatibility
+        },
+        body: JSON.stringify(requestBody),
+        credentials: 'same-origin', // Safari CORS compatibility
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to add payment");
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        throw new Error(errorData.message || "Failed to add payment");
       }
+
+      const data = await response.json();
 
       // Reset form
       setFormData({
@@ -84,6 +99,7 @@ export default function PaymentModal({
 
       onSuccess();
     } catch (err: unknown) {
+      console.error('Payment error:', err);
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
